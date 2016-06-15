@@ -3,7 +3,7 @@
     "description": "Nosto Magento extension - no dependencies",
     "license": "OSL v3.0",
     "type":"magento-module",
-    "require": {
+    "require-dev": {
         "nosto/php-sdk": "1.15.0"
     },
     "config": {
