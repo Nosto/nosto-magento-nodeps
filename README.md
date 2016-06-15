@@ -1,0 +1,1 @@
+# nosto-magento-nodeps
