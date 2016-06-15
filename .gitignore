@@ -1,5 +1,12 @@
 vendor
 node_modules
 .idea
-lib
-
+lib/composer
+lib/autoload.php
+lib/nosto/php-sdk/tests
+lib/nosto/php-sdk/codeception.yml
+lib/nosto/php-sdk/.gitignore
+lib/nosto/php-sdk/composer*
+lib/nosto/php-sdk/Gruntfile.js
+lib/nosto/php-sdk/package.json
+lib/nosto/php-sdk/ruleset.xml
