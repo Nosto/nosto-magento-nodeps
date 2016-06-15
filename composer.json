@@ -1,6 +1,6 @@
 {
-    "name": "nosto/nosto-magento-extension",
-    "description": "Nosto Magento extension",
+    "name": "nosto/nosto-magento-nodeps",
+    "description": "Nosto Magento extension - no dependencies",
     "license": "OSL v3.0",
     "type":"magento-module",
     "repositories": [
