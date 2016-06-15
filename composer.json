@@ -3,21 +3,8 @@
     "description": "Nosto Magento extension - no dependencies",
     "license": "OSL v3.0",
     "type":"magento-module",
-    "repositories": [
-        {
-          "type": "vcs",
-          "url": "https://github.com/Nosto/php-sdk.git"
-        },
-        {
-          "type": "vcs",
-          "url": "https://github.com/mridang/magazine.git"
-        }
-    ],
     "require": {
         "nosto/php-sdk": "1.15.0"
-    },
-    "require-dev": {
-        "mridang/magazine": "dev-master"
     },
     "config": {
         "vendor-dir": "lib"
