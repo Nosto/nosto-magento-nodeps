@@ -4,7 +4,7 @@
     "license": "OSL v3.0",
     "type":"magento-module",
     "require-dev": {
-        "nosto/php-sdk": "1.15.5"
+        "nosto/php-sdk": "1.16.0"
     },
     "config": {
         "vendor-dir": "lib"

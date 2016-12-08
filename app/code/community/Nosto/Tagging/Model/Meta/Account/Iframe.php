@@ -116,12 +116,12 @@ class Nosto_Tagging_Model_Meta_Account_Iframe extends Mage_Core_Model_Abstract i
     public function loadData(Mage_Core_Model_Store $store)
     {
         /** @var Mage_Admin_Model_User $user */
+        /** @noinspection PhpUndefinedMethodInspection */
         $user = Mage::getSingleton('admin/session')->getUser();
         /** @var Nosto_Tagging_Helper_Url $urlHelper */
         $urlHelper = Mage::helper('nosto_tagging/url');
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging/data');
-
         $this->_firstName = $user->getFirstname();
         $this->_lastName = $user->getLastname();
         $this->_email = $user->getEmail();

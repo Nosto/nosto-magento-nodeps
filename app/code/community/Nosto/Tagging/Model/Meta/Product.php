@@ -102,9 +102,77 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
     protected $_brand;
 
     /**
-     * @var string the product publication date in the shop.
+     * @var string the default variation identifier of the shop
      */
-    protected $_datePublished;
+    protected $_variationId;
+
+    /**
+     * @var float the price paid for the supplier
+     */
+    protected $_supplierCost;
+
+    /**
+     * @var int product stock
+     */
+    protected $_inventoryLevel;
+
+    /**
+     * @var int the amount of reviews
+     */
+    protected $_reviewCount;
+
+    /**
+     * @var float the value of the rating(s)
+     */
+    protected $_ratingValue;
+
+    /**
+     * @var array alternative image urls
+     */
+    protected $_alternateImageUrls;
+
+    /**
+     * @var string the condition of the product
+     */
+    protected $_condition;
+
+    /**
+     * @var string the gender (target group) of the product
+     */
+    protected $_gender;
+
+    /**
+     * @var string the the age group
+     */
+    protected $_ageGroup;
+
+    /**
+     * @var string the barcode
+     */
+    protected $_gtin;
+
+    /**
+     * @var string category used in Google's services
+     */
+    protected $_googleCategory;
+
+    /**
+     * @var string the pricing measure of the product. Pricing measure for a
+     * 0.33 liter bottle for example is "0.33".
+     */
+    protected $_unitPricingMeasure;
+
+    /**
+     * @var string the pricing base measure of the product. Pricing base measure
+     * for a 0.33l bottle is "1".
+     */
+    protected $_unitPricingBaseMeasure;
+
+    /**
+     * @var string the pricing unit of the product. Pricing unit for a 0.33l
+     * bottle is "l" (litre).
+     */
+    protected $_unitPricingUnit;
 
     /**
      * @inheritdoc
@@ -142,6 +210,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
         foreach (Nosto_Tagging_Helper_Data::$validTags as $validTag) {
             $this->_tags[$validTag] = array();
         }
+        $this->_alternateImageUrls = array();
     }
 
     /**
@@ -158,14 +227,25 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
 
         /** @var Nosto_Tagging_Helper_Price $priceHelper */
         $priceHelper = Mage::helper('nosto_tagging/price');
+        /** @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging');
 
         $this->_url = $this->buildUrl($product, $store);
         $this->_productId = $product->getId();
         $this->_name = $product->getName();
         $this->_imageUrl = $this->buildImageUrl($product, $store);
-        $this->_price = $priceHelper->convertToDefaultCurrency($priceHelper->getProductFinalPriceInclTax($product), $store);
-        $this->_listPrice = $priceHelper->convertToDefaultCurrency($priceHelper->getProductPriceInclTax($product), $store);
-        $this->_currencyCode = $store->getDefaultCurrency()->getCode();
+        $currentCurrencyCode = $store->getCurrentCurrencyCode();
+        $this->_price = $priceHelper->getTaggingPrice(
+            $priceHelper->getProductFinalPriceInclTax($product),
+            $currentCurrencyCode,
+            $store
+        );
+        $this->_listPrice = $priceHelper->getTaggingPrice(
+            $priceHelper->getProductPriceInclTax($product),
+            $currentCurrencyCode,
+            $store
+        );
+        $this->_currencyCode = $priceHelper->getTaggingCurrencyCode($currentCurrencyCode, $store);
         $this->_availability = $this->buildAvailability($product);
         $this->_categories = $this->buildCategories($product);
 
@@ -177,14 +257,15 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
         if ($product->hasData('description')) {
             $this->_description = $product->getData('description');
         }
-        if ($product->hasData('manufacturer')) {
-            $this->_brand = $product->getAttributeText('manufacturer');
+        $brandAttribute = $dataHelper->getBrandAttribute($store);
+        if ($product->hasData($brandAttribute)) {
+            $this->_brand = $this->getAttributeValue($product, $brandAttribute);
         }
         if (($tags = $this->buildTags($product, $store)) !== array()) {
             $this->_tags['tag1'] = $tags;
         }
-        if ($product->hasData('created_at')) {
-            $this->_datePublished = $product->getData('created_at');
+        if (!$dataHelper->multiCurrencyDisabled($store)) {
+            $this->_variationId = $store->getBaseCurrencyCode();
         }
 
         $this->amendAttributeTags($product, $store);
@@ -275,12 +356,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
             foreach ($product_attributes as $key=>$product_attribute) {
                 if (in_array($key, $attributes_to_tag)) {
                     try {
-                        $attribute_data = $product->getData($key);
-                        $attribute_value = $product->getAttributeText($key);
-                        if (!$attribute_value && is_scalar($attribute_data)) {
-                            $attribute_value = $attribute_data;
-                        }
-                        $attribute_value = trim($attribute_value);
+                        $attribute_value = $this->getAttributeValue($product, $key);
                         if (!empty($attribute_value)) {
                             $this->_tags[$tag_id][] = sprintf(
                                 '%s:%s',
@@ -537,16 +613,6 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
     }
 
     /**
-     * Returns the product publication date in the shop.
-     *
-     * @return string the date.
-     */
-    public function getDatePublished()
-    {
-        return $this->_datePublished;
-    }
-
-    /**
      * Returns the full product description,
      * i.e. both the "short" and "normal" descriptions concatenated.
      *
@@ -571,6 +637,126 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Tagging_Model_Base implemen
      */
     public function getVariationId()
     {
-        return null;
+        return $this->_variationId;
+    }
+
+    private function getAttributeValue(Mage_Catalog_Model_Product $product, $attributeName)
+    {
+        $attribute = $product->getResource()->getAttribute($attributeName);
+        if ($attribute instanceof Mage_Catalog_Model_Resource_Eav_Attribute) {
+            $attribute_data = $product->getData($attributeName);
+            $attribute_value = $product->getAttributeText($attributeName);
+            if (empty($attribute_value) && is_scalar($attribute_data)) {
+                $attribute_value = $attribute_data;
+            }
+        } else {
+            $attribute_value = null;
+        }
+
+        return trim($attribute_value);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getSupplierCost()
+    {
+        return $this->_supplierCost;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getInventoryLevel()
+    {
+        return $this->_inventoryLevel;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getReviewCount()
+    {
+        return $this->_reviewCount;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getRatingValue()
+    {
+        return $this->_ratingValue;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getAlternateImageUrls()
+    {
+        return $this->_alternateImageUrls;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCondition()
+    {
+        return $this->_condition;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getGender()
+    {
+        return $this->_gender;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getAgeGroup()
+    {
+        return $this->_ageGroup;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getGtin()
+    {
+        return $this->_gtin;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getGoogleCategory()
+    {
+        return $this->_googleCategory;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getUnitPricingMeasure()
+    {
+        return $this->_unitPricingMeasure;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getUnitPricingBaseMeasure()
+    {
+        return $this->_unitPricingBaseMeasure;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getUnitPricingUnit()
+    {
+        return $this->_unitPricingUnit;
     }
 }

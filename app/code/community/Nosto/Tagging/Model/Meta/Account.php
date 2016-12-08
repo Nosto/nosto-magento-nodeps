@@ -1,9 +1,9 @@
 <?php
 /**
  * Magento
- *
+ *  
  * NOTICE OF LICENSE
- *
+ *  
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
@@ -11,13 +11,13 @@
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@magentocommerce.com so we can send you a copy immediately.
- *
+ *  
  * DISCLAIMER
- *
+ *  
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
  * needs please refer to http://www.magentocommerce.com for more information.
- *
+ *  
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
@@ -86,6 +86,21 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
     protected $_details;
 
     /**
+     * @var bool the flag to use exchange rates or not
+     */
+    protected $_useCurrencyExchangeRates;
+
+    /**
+     * @var array The array of currencies
+     */
+    protected $_currencies = array();
+
+    /**
+     * @var string The base currency of the store
+     */
+    protected $_defaultPriceVariationId;
+
+    /**
      * @inheritdoc
      */
     protected function _construct()
@@ -102,6 +117,8 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
     {
         /* @var Nosto_Tagging_Helper_Data $helper */
         $helper = Mage::helper('nosto_tagging');
+        /* @var Nosto_Tagging_Helper_Url $helperUrl */
+        $helperUrl = Mage::helper('nosto_tagging/url');
         $this->_title = $helper->cleanUpAccountTitle(
             $store->getWebsite()->getName()
             . ' - '
@@ -110,15 +127,7 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
             . $store->getName()
         );
         $this->_name = substr(sha1(rand()), 0, 8);
-        if (!$helper->getUsePrettyProductUrls()) {
-            $this->_frontPageUrl = NostoHttpRequest::replaceQueryParamInUrl(
-                '___store',
-                $store->getCode(),
-                $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB)
-            );
-        } else {
-            $this->_frontPageUrl = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
-        }
+        $this->_frontPageUrl = $helperUrl->getFrontPageUrl($store);
         $this->_currencyCode = $store->getBaseCurrencyCode();
         $this->_languageCode = substr(
             $store->getConfig('general/locale/code'), 0, 2
@@ -136,6 +145,24 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
         $billing = Mage::getModel('nosto_tagging/meta_account_billing');
         $billing->loadData($store);
         $this->_billing = $billing;
+
+        $this->_useCurrencyExchangeRates = !$helper->multiCurrencyDisabled($store);
+        if (!$helper->multiCurrencyDisabled($store)) {
+            $this->_defaultPriceVariationId = $store->getBaseCurrencyCode();
+        } else {
+            $this->_defaultPriceVariationId = "";
+        }
+
+        $storeLocale = $store->getConfig('general/locale/code');
+        $currencyCodes = $store->getAvailableCurrencyCodes(true);
+        if (is_array($currencyCodes) && count($currencyCodes) > 0) {
+            /** @var Nosto_Tagging_Helper_Currency $currencyHelper */
+            $currencyHelper = Mage::helper('nosto_tagging/currency');
+            foreach ($currencyCodes as $currencyCode) {
+                $this->_currencies[$currencyCode] = $currencyHelper
+                    ->getCurrencyObject($storeLocale, $currencyCode);
+            }
+        }
     }
 
     /**
@@ -265,7 +292,7 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
      */
     public function getCurrencies()
     {
-        return null;
+        return $this->_currencies;
     }
 
     /**
@@ -278,7 +305,7 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
      */
     public function getUseCurrencyExchangeRates()
     {
-        return false;
+        return $this->_useCurrencyExchangeRates;
     }
 
     /**
@@ -288,7 +315,7 @@ class Nosto_Tagging_Model_Meta_Account extends Mage_Core_Model_Abstract implemen
      */
     public function getDefaultVariationId()
     {
-        return null;
+        return $this->_defaultPriceVariationId;
     }
 
     /**

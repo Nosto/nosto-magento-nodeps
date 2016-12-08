@@ -37,13 +37,16 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
     /**
      * Formats price into Nosto format, e.g. 1000.99.
      *
-     * @param string|int|float $price the price to format.
+     * @param int|float $price the price to format.
      *
      * @return string
      */
     public function getFormattedPrice($price)
     {
-        return number_format($price, 2, '.', '');
+        /* @var $nostoPriceHelper NostoHelperPrice */
+        $nostoPriceHelper = Nosto::helper('price');
+
+        return $nostoPriceHelper->format($price, 2, '.', '');
     }
 
     /**
@@ -79,25 +82,35 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
      *
      * @return float
      */
-    protected function _getProductPrice($product, $finalPrice = false, $inclTax = true)
-    {
+    protected function _getProductPrice(
+        $product,
+        $finalPrice = false,
+        $inclTax = true
+    ) {
         $price = 0;
 
         switch ($product->getTypeId()) {
             case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
-                // Get the bundle product "from" price.
-                $price = $product->getPriceModel()
-                    ->getTotalPrices($product, 'min', $inclTax);
+                // Get the bundle product "from" / min price.
+                // Price for bundled "parent" product cannot be configured in
+                // store admin. In practise there is no such thing as
+                // parent product for the bundled type product
+                /** @var Mage_Bundle_Model_Product_Price $model */
+                $model = $product->getPriceModel();
+                $price = $model->getTotalPrices($product, 'min', $inclTax);
                 break;
-
             case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
                 // Get the grouped product "starting at" price.
+                // Price for grouped "parent" product cannot be configured in
+                // store admin. In practise there is no such thing as
+                // parent product for the grouped type product
+                /** @var Mage_Catalog_Model_Config $config */
+                $config = Mage::getSingleton('catalog/config');
                 /** @var $tmpProduct Mage_Catalog_Model_Product */
                 $tmpProduct = Mage::getModel('catalog/product')
                     ->getCollection()
                     ->addAttributeToSelect(
-                        Mage::getSingleton('catalog/config')
-                            ->getProductAttributes()
+                        $config->getProductAttributes()
                     )
                     ->addAttributeToFilter('entity_id', $product->getId())
                     ->setPage(1, 1)
@@ -106,23 +119,78 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
                     ->load()
                     ->getFirstItem();
                 if ($tmpProduct) {
+                    /** @var Mage_Tax_Helper_Data $helper */
+                    $helper = Mage::helper('tax');
                     $price = $tmpProduct->getMinimalPrice();
                     if ($inclTax) {
-                        $price = Mage::helper('tax')
-                            ->getPrice($tmpProduct, $price, true);
+                        $price = $helper->getPrice($tmpProduct, $price, true);
                     }
                 }
                 break;
-
-            default:
-                $price = $finalPrice
-                    ? $product->getFinalPrice()
-                    : $product->getPrice();
-                if ($inclTax) {
-                    $price = Mage::helper('tax')
-                        ->getPrice($product, $price, true);
+            case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
+                // For configurable products we use the price defined for the
+                // "parent" product. If for some reason the parent product
+                // doesn't have a price configured we fetch the lowest price
+                // configured from a child product / variation
+                $price = $this->_getDefaultFromProduct(
+                    $product,
+                    $finalPrice,
+                    $inclTax
+                );
+                if (!$price) {
+                    $associatedProducts = Mage::getModel(
+                        'catalog/product_type_configurable'
+                    )->getUsedProducts(null, $product);
+                    $lowestPrice = false;
+                    foreach ($associatedProducts as $associatedProduct) {
+                        /* @var Mage_Catalog_Model_Product $productModel */
+                        $productModel = Mage::getModel('catalog/product')->load(
+                            $associatedProduct->getId()
+                        );
+                        if ($finalPrice) {
+                            $variationPrice = $this->getProductFinalPriceInclTax($productModel);
+                        } else {
+                            $variationPrice = $this->getProductPriceInclTax($productModel);
+                        }
+                        if (!$lowestPrice || $variationPrice < $lowestPrice) {
+                            $lowestPrice = $variationPrice;
+                        }
+                    }
+                    $price = $lowestPrice;
                 }
                 break;
+            default:
+                $price = $this->_getDefaultFromProduct(
+                    $product,
+                    $finalPrice,
+                    $inclTax
+                );
+                break;
+        }
+
+        return $price;
+    }
+
+    /**
+     * Returns the price from product
+     *
+     * @param $product
+     * @param bool $finalPrice
+     * @param bool $inclTax
+     * @return float
+     */
+    protected function _getDefaultFromProduct(
+        $product,
+        $finalPrice = false,
+        $inclTax = true
+    ) {
+        /** @var Mage_Tax_Helper_Data $helper */
+        $helper = Mage::helper('tax');
+        $price = $finalPrice
+            ? $product->getFinalPrice()
+            : $product->getPrice();
+        if ($inclTax) {
+            $price = $helper->getPrice($product, $price, true);
         }
 
         return $price;
@@ -147,7 +215,9 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
             );
             $price = 0;
         }
-        return Mage::helper('directory')->currencyConvert(
+        /** @var Mage_Directory_Helper_Data $helper */
+        $helper = Mage::helper('directory');
+        return $helper->currencyConvert(
             $price,
             $store->getBaseCurrency()->getCode(),
             $store->getDefaultCurrency()->getCode()
@@ -164,12 +234,14 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
      */
     public function getItemFinalPriceInclTax(Mage_Sales_Model_Order_Item $item)
     {
+        /** @var Mage_Directory_Helper_Data $helper */
+        $helper = Mage::helper('directory');
         $quantity = (double)$item->getQtyOrdered();
         $basePrice = $item->getBaseRowTotal() + $item->getBaseTaxAmount() + $item->getBaseHiddenTaxAmount() - $item->getBaseDiscountAmount();
         $orderCurrencyCode = $item->getOrder()->getOrderCurrencyCode();
         $baseCurrencyCode = $item->getOrder()->getBaseCurrencyCode();
         if ($orderCurrencyCode != $baseCurrencyCode) {
-            $priceInOrderCurrency = Mage::helper('directory')->currencyConvert(
+            $priceInOrderCurrency = $helper->currencyConvert(
                 $basePrice,
                 $baseCurrencyCode,
                 $orderCurrencyCode
@@ -182,5 +254,51 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
         }
         
         return $priceInOrderCurrency;
+    }
+
+    /**
+     * If the store uses multiple currencies the prices are converted from base
+     * currency into given currency. Otherwise the given price is returned.
+     *
+     * @param float                 $basePrice The price of a product in base currency
+     * @param string                $currentCurrencyCode
+     * @param Mage_Core_Model_Store $store
+     * @return float
+     */
+    public function getTaggingPrice($basePrice, $currentCurrencyCode, Mage_Core_Model_Store $store)
+    {
+        /* @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        $baseCurrencyCode = $store->getBaseCurrencyCode();
+        $taggingPrice = $basePrice;
+        if ($helper->multiCurrencyDisabled($store) && $currentCurrencyCode !== $store->getBaseCurrencyCode()) {
+            $taggingPrice = Mage::helper('directory')->currencyConvert(
+                $basePrice,
+                $baseCurrencyCode,
+                $currentCurrencyCode
+            );
+        }
+
+        return $taggingPrice;
+    }
+
+    /**
+     * Returns the correct currency code for tagging
+     *
+     * @param $currentCurrencyCode
+     * @param Mage_Core_Model_Store $store
+     * @return string currency code in ISO 4217 format
+     */
+    public function getTaggingCurrencyCode($currentCurrencyCode, Mage_Core_Model_Store $store)
+    {
+        /* @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        if ($helper->multiCurrencyDisabled($store)) {
+            $taggingCurrencyCode = $currentCurrencyCode;
+        } else {
+            $taggingCurrencyCode = $store->getBaseCurrencyCode();
+        }
+
+        return $taggingCurrencyCode;
     }
 }

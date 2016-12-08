@@ -41,7 +41,7 @@ class Nosto_Tagging_Helper_Customer extends Mage_Core_Helper_Abstract
      *
      * @param Mage_Sales_Model_Order $order the order to get the Nosto ID for.
      *
-     * @return bool|string the Nosto ID or false if not found for order.
+     * @return string|bool
      */
     public function getNostoId(Mage_Sales_Model_Order $order)
     {
@@ -72,6 +72,8 @@ class Nosto_Tagging_Helper_Customer extends Mage_Core_Helper_Abstract
                 ->getCollection()
                 ->addFieldToFilter('quote_id', $quoteId)
                 ->addFieldToFilter('nosto_id', $nostoId)
+                ->setPageSize(1)
+                ->setCurPage(1)
                 ->getFirstItem();
             if ($customer->hasData()) {
                 $customer->setUpdatedAt(date('Y-m-d H:i:s'));
@@ -83,5 +85,23 @@ class Nosto_Tagging_Helper_Customer extends Mage_Core_Helper_Abstract
                 $customer->save();
             }
         }
+    }
+
+    /**
+     * Return the checksum / customer reference for customer
+     *
+     * @param Mage_Customer_Model_Customer $customer
+     *
+     * @return string
+     */
+    public function generateCustomerReference(Mage_Customer_Model_Customer $customer)
+    {
+        $hash = md5($customer->getId().$customer->getEmail());
+        $uuid = uniqid(
+            substr($hash, 0, 8),
+            true
+        );
+
+        return $uuid;
     }
 }
