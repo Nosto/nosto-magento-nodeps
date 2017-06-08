@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -36,7 +36,7 @@
 class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_Template
 {
     /**
-     * The id for the a tag where echange rate cron is configured
+     * The id for the a tag where exchange rate cron is configured
      *
      * @var string
      */
@@ -56,13 +56,14 @@ class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging/data');
         foreach (Mage::app()->getStores() as $store) {
-            /** @var NostoAccount $account */
+            /** @var Nosto_Object_Signup_Account $account */
             $account = $accountHelper->find($store);
             if ($account !== null
                 && $account->isConnectedToNosto()
                 && $account->hasMissingTokens()
-                && !$dataHelper->multiCurrencyDisabled($store)) {
-                    return false;
+                && !$dataHelper->multiCurrencyDisabled($store)
+            ) {
+                return false;
             }
         }
         return true;
@@ -100,8 +101,9 @@ class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
             $account = $accountHelper->find($store);
             if ($account !== null
                 && !$dataHelper->multiCurrencyDisabled($store)
-                && !$dataHelper->isScheduledCurrencyExchangeRateUpdateEnabled($store)) {
-                    return false;
+                && !$dataHelper->isScheduledCurrencyExchangeRateUpdateEnabled($store)
+            ) {
+                return false;
             }
         }
         return true;
@@ -109,7 +111,7 @@ class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
 
     /**
      * Checks if any of the Nosto accounts where previously installed into a
-     * different store or magento installtion. This would happen mostly when
+     * different store or magento installation. This would happen mostly when
      * development/staging setup is deployed to the production or vice versa.
      *
      * Return array structure
@@ -135,16 +137,22 @@ class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
         /* @var $store Mage_Core_Model_Store */
         foreach (Mage::app()->getStores() as $store) {
             $savedFrontPageUrl = $dataHelper->getStoreFrontPageUrl($store);
-            /* @var $nostoAccount NostoAccount */
+            /* @var $nostoAccount Nosto_Object_Signup_Account */
             $nostoAccount = $accountHelper->find($store);
             if (
                 empty($savedFrontPageUrl)
-                || $nostoAccount instanceof NostoAccount == false
+                || $nostoAccount instanceof Nosto_Object_Signup_Account == false
             ) {
                 continue;
             }
+
             $currentFrontPageUrl = $urlHelper->getFrontPageUrl($store);
-            if ($savedFrontPageUrl != $currentFrontPageUrl) {
+            if (
+                !self::storeUrlsMatch(
+                    $savedFrontPageUrl,
+                    $currentFrontPageUrl
+                )
+            ) {
                 $invalidConfig = array(
                     'savedUrl' => $savedFrontPageUrl,
                     'currentUrl' => $currentFrontPageUrl,
@@ -152,7 +160,7 @@ class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
                     'nostoAccount' => $nostoAccount->getName(),
                     'actionUrl' => $this->getUrl(
                         'adminhtml/nosto/resetAccountSettings/',
-                        array('store'=>$store->getId())
+                        array('store' => $store->getId())
                     )
                 );
 
@@ -161,5 +169,32 @@ class Nosto_Tagging_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
         }
 
         return $result;
+    }
+
+    /**
+     * Compares two URLs with host and path part
+     * @param string $installedUrl
+     * @param string $currentUrl
+     * @return bool
+     */
+    protected static function storeUrlsMatch(
+        $installedUrl,
+        $currentUrl
+    )
+    {
+        $match = true;
+        /* @var Mage_Core_Model_Url $mageUrl */
+        $mageUrl = Mage::getSingleton('core/url');
+        $installedModel = clone $mageUrl->parseUrl($installedUrl);;
+        $currentModel = $mageUrl->parseUrl($currentUrl);
+        /** @noinspection PhpUndefinedMethodInspection */
+        $concatInstalled = $installedModel->getHost(). $installedModel->getPath();
+        /** @noinspection PhpUndefinedMethodInspection */
+        $concatCurrent= $currentModel->getHost(). $currentModel->getPath();
+        if ($concatCurrent != $concatInstalled) {
+            $match = false;
+        }
+
+        return $match;
     }
 }

@@ -21,50 +21,39 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-$formAction = Mage::getUrl('checkout/cart/add');
+/* @var $this Nosto_Tagging_Block_Addtocart */
+$formAction = $this->getAddToCartUrl();
 /** @var Mage_Core_Model_Session $session */
 $session = Mage::getSingleton('core/session');
 $formKey = $session->getFormKey();
 ?>
 <!-- Nosto `add-to-cart` Script -->
+<!--suppress JSUnresolvedFunction -->
 <script type="text/javascript">
     if (typeof Nosto === "undefined") {
         var Nosto = {};
     }
     Nosto.addProductToCart = function (productId, element) {
-        if (typeof nostojs !== 'undefined' && typeof element == 'object') {
-            var slotId = Nosto.resolveContextSlotId(element);
-            if (slotId) {
-                nostojs(function (api) {
-                    api.recommendedProductAddedToCart(productId, slotId);
-                });
-            }
-        }
-        var form = document.createElement("form");
-        form.setAttribute("method", "post");
-        form.setAttribute("action", "<?php echo $formAction; ?>");
-
-        var hiddenFields = {
+        Nosto.trackAddToCartClick(productId, element);
+        var fields = {
             "product": productId,
             "form_key": "<?php echo $formKey; ?>"
         };
-
-        for (var key in hiddenFields) {
-            if (hiddenFields.hasOwnProperty(key)) {
-                var hiddenField = document.createElement("input");
-                hiddenField.setAttribute("type", "hidden");
-                hiddenField.setAttribute("name", key);
-                hiddenField.setAttribute("value", hiddenFields[key]);
-                form.appendChild(hiddenField);
-            }
-        }
-
-        document.body.appendChild(form);
-        form.submit();
+        Nosto.postAddToCartForm(fields, "<?php echo $formAction; ?>");
+    };
+    // Product object must have fields productId and skuId {productId: 123, skuId: 321}
+    Nosto.addSkuToCart = function (product, element) {
+        Nosto.trackAddToCartClick(product.productId, element);
+        var fields = {
+            "product": product.productId,
+            "sku": product.skuId,
+            "form_key": "<?php echo $formKey; ?>"
+        };
+        Nosto.postAddToCartForm(fields, "<?php echo $this->getAddSkuToCartUrl(); ?>");
     };
     Nosto.resolveContextSlotId = function (element) {
         var m = 20;
@@ -73,7 +62,7 @@ $formKey = $session->getFormKey();
         while (typeof e.parentElement !== "undefined" && e.parentElement) {
             ++n;
             e = e.parentElement;
-            if (e.getAttribute('class') == 'nosto_element' && e.getAttribute('id')) {
+            if (e.getAttribute('class') === 'nosto_element' && e.getAttribute('id')) {
                 return e.getAttribute('id');
             }
             if (n >= m) {
@@ -81,6 +70,31 @@ $formKey = $session->getFormKey();
             }
         }
         return false;
-    }
-
+    };
+    Nosto.trackAddToCartClick = function (productId, element) {
+        if (typeof nostojs !== 'undefined' && typeof element === 'object') {
+            var slotId = Nosto.resolveContextSlotId(element);
+            if (slotId) {
+                nostojs(function (api) {
+                    api.recommendedProductAddedToCart(productId, slotId);
+                });
+            }
+        }
+    };
+    Nosto.postAddToCartForm = function (data, url) {
+        var form = document.createElement("form");
+        form.setAttribute("method", "post");
+        form.setAttribute("action", url);
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                var hiddenField = document.createElement("input");
+                hiddenField.setAttribute("type", "hidden");
+                hiddenField.setAttribute("name", key);
+                hiddenField.setAttribute("value", data[key]);
+                form.appendChild(hiddenField);
+            }
+        }
+        document.body.appendChild(form);
+        form.submit();
+    };
 </script>

@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -39,11 +39,6 @@ class Nosto_Tagging_Block_Product extends Mage_Catalog_Block_Product_Abstract
      * @var Nosto_Tagging_Model_Meta_Product runtime cache for the product meta.
      */
     protected $_product;
-
-    /**
-     * @var string runtime cache for the current category path string.
-     */
-    protected $_currentCategory;
 
     /**
      * Render product info as hidden meta data if the module is enabled for the
@@ -65,6 +60,16 @@ class Nosto_Tagging_Block_Product extends Mage_Catalog_Block_Product_Abstract
         }
 
         return parent::_toHtml();
+    }
+
+    /**
+     * Helper method that checks if the product object has been overidden
+     *
+     * @return bool a boolean value indicating the state
+     */
+    public function isOveridden() 
+    {
+        return !(get_class($this->getMetaProduct()) === 'Nosto_Tagging_Model_Meta_Product');
     }
 
     /**
@@ -90,13 +95,10 @@ class Nosto_Tagging_Block_Product extends Mage_Catalog_Block_Product_Abstract
      */
     public function getCurrentCategory()
     {
-        if (!$this->_currentCategory) {
-            $category = Mage::registry('current_category');
-            /** @var Nosto_Tagging_Helper_Data $helper */
-            $helper = Mage::helper('nosto_tagging');
-            $this->_currentCategory = $helper->buildCategoryString($category);
-        }
+        $category = Mage::registry('current_category');
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
 
-        return $this->_currentCategory;
+        return $helper->buildCategoryString($category);
     }
 }

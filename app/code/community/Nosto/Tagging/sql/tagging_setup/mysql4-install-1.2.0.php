@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -30,10 +30,9 @@
  * i.e. when no "tagging_setup" entry is present in the `core_resource` table.
  *
  * Creates the db table for matching Magento cart quotes to nosto customer ids.
- *
- * @var Nosto_Tagging_Model_Resource_Setup $installer
  */
 
+/** @var Mage_Eav_Model_Entity_Setup $this */
 $installer = $this;
 $installer->startSetup();
 
@@ -67,6 +66,14 @@ if (!$installer->getConnection()->isTableExists($installer->getTable('nosto_tagg
         )
         ->addColumn(
             'updated_at', Varien_Db_Ddl_Table::TYPE_DATETIME, null, array(
+                'nullable' => true
+            )
+        )
+        ->addColumn(
+            Nosto_Tagging_Helper_Data::NOSTO_TAGGING_RESTORE_CART_ATTRIBUTE,
+            Varien_Db_Ddl_Table::TYPE_TEXT,
+            Nosto_Tagging_Helper_Data::NOSTO_TAGGING_RESTORE_CART_ATTRIBUTE_LENGTH,
+            array(
                 'nullable' => true
             )
         )

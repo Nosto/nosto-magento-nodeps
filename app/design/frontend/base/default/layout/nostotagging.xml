@@ -21,7 +21,7 @@
   ~ @category  Nosto
   ~ @package   Nosto_Tagging
   ~ @author    Nosto Solutions Ltd <magento@nosto.com>
-  ~ @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+  ~ @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
   ~ @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
   -->
 <!--suppress XmlUnboundNsPrefix -->
@@ -39,7 +39,7 @@
 
         <!-- Adds Nosto js stub to head -->
         <reference name="head">
-            <block type="core/template" name="nosto.js.stub" template="nostotagging/jsstub.phtml"/>
+            <block type="nosto_tagging/stub" name="nosto.js.stub" template="nostotagging/jsstub.phtml"/>
         </reference>
 
         <!-- Adds Nosto embed script to head -->
@@ -97,7 +97,7 @@
 
     <checkout_klarna_success>
         <reference name="after_body_start">
-            <block type="nosto_tagging/order_vaimo_klarna_checkout" name="nosto.order.vaimo.klarna" template="nostotagging/order.phtml"/>
+            <block type="nosto_tagging/order" name="nosto.order.klarna" template="nostotagging/order.phtml"/>
         </reference>
     </checkout_klarna_success>
 

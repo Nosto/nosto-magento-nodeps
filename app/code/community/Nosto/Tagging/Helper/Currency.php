@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -39,7 +39,7 @@ class Nosto_Tagging_Helper_Currency extends Mage_Core_Helper_Abstract
      *
      * @param string $locale the locale to get the currency format in.
      * @param string $currencyCode the currency ISO 4217 code to get the currency in.
-     * @return NostoCurrency the parsed currency.
+     * @return Nosto_Object_Format the parsed currency.
      */
     public function getCurrencyObject($locale, $currencyCode)
     {
@@ -52,67 +52,34 @@ class Nosto_Tagging_Helper_Currency extends Mage_Core_Helper_Abstract
             $format = substr($format, 0, $pos);
         }
         // Check if the currency symbol is before or after the amount.
-        $symbolPosition = (strpos(trim($format), '¤') === 0)
-            ? NostoCurrencySymbol::SYMBOL_POS_LEFT
-            : NostoCurrencySymbol::SYMBOL_POS_RIGHT;
+        $symbolPosition = strpos(trim($format), '¤') === 0;
+
         // Remove all other characters than "0", "#", "." and ",",
         $format = preg_replace('/[^0\#\.,]/', '', $format);
         // Calculate the decimal precision.
         $precision = 0;
-        if (($decimalPos = strpos($format, '.')) !== false) {
+        if (($decimalPos = strpos($format, '.')) !== false) { // @codingStandardsIgnoreLine
             $precision = (strlen($format) - (strrpos($format, '.') + 1));
         } else {
             $decimalPos = strlen($format);
         }
         $decimalFormat = substr($format, $decimalPos);
-        if (($pos = strpos($decimalFormat, '#')) !== false){
+        if (($pos = strpos($decimalFormat, '#')) !== false) {
             $precision = strlen($decimalFormat) - $pos - $precision;
         }
-        // Calculate the group length.
-        if (strrpos($format, ',') !== false) {
-            $groupLength = ($decimalPos - strrpos($format, ',') - 1);
-        } else {
-            $groupLength = strrpos($format, '.');
-        }
+
         // If the symbol is missing for the current locale, use the ISO code.
         $currencySymbol = $currency->getSymbol();
-        if (is_null($currencySymbol)) {
+        if ($currencySymbol === null) {
             $currencySymbol = $currencyCode;
         }
 
-        return new NostoCurrency(
-            new NostoCurrencyCode($currencyCode),
-            new NostoCurrencySymbol($currencySymbol, $symbolPosition),
-            new NostoCurrencyFormat(
-                $symbols['group'],
-                $groupLength,
-                $symbols['decimal'],
-                $precision
-            )
+        return new Nosto_Object_Format(
+            $symbolPosition,
+            $currencySymbol,
+            $symbols['decimal'],
+            $symbols['group'],
+            $precision
         );
-    }
-
-    /**
-     * Returns a collection of currency exchange rates.
-     *
-     * @param string $baseCurrencyCode the currency code to base the rates on.
-     * @param array  $currencyCodes the currency codes to fetch the rates for.
-     *
-     * @return Nosto_Tagging_Model_Collection_Rates
-     */
-    public function getExchangeRateCollection($baseCurrencyCode, array $currencyCodes)
-    {
-        $collection = new Nosto_Tagging_Model_Collection_Rates();
-        /** @var Mage_Directory_Model_Currency $currency */
-        $currency = Mage::getModel('directory/currency');
-        $rates = $currency->getCurrencyRates($baseCurrencyCode, $currencyCodes);
-        foreach ($rates as $code => $rate) {
-            // Skip base currency.
-            if ($baseCurrencyCode === $code) {
-                continue;
-            }
-            $collection[] = new NostoExchangeRate($code, $code, $rate);
-        }
-        return $collection;
     }
 }

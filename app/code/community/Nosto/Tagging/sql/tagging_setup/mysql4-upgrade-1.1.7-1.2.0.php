@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -30,10 +30,9 @@
  *
  * Deletes all existing module configurations.
  * Creates the db table for matching Magento cart quotes to nosto customer ids.
- *
- * @var Nosto_Tagging_Model_Resource_Setup $installer
  */
 
+/** @var Mage_Eav_Model_Entity_Setup $this */
 $installer = $this;
 $installer->startSetup();
 

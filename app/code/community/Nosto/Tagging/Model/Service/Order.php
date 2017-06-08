@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -37,90 +37,79 @@
 class Nosto_Tagging_Model_Service_Order
 {
     /**
-     * Sends an order confirmation to Nosto.
+     * Flag for disabling inventory sync for slow connections
      *
-     * @param Nosto_Tagging_Model_Meta_Order $order the order to confirm.
-     * @param NostoAccount $account the Nosto account object.
-     * @param null $customerId the Nosto customer ID of the user who placed the order.
-     * @throws NostoException on failure.
-     * @return true on success.
+     * @var bool
      */
-    public function confirm(Nosto_Tagging_Model_Meta_Order $order, NostoAccount $account, $customerId = null)
+    public static $syncInventoriesAfterOrder = true;
+
+    /**
+     * Sends an order confirmation to Nosto and also batch updates all products
+     * that were included in the order.
+     *
+     * @param Mage_Sales_Model_Order $mageOrder
+     * @return bool
+     */
+    public function confirm(Mage_Sales_Model_Order $mageOrder)
     {
-        $request = $this->initApiRequest($account, $customerId);
-        $response = $request->post($this->getOrderAsJson($order));
-        if ($response->getCode() !== 200) {
-            Nosto::throwHttpException('Failed to send order confirmation to Nosto.', $request, $response);
+        /** @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging');
+        /** @var Nosto_Tagging_Helper_Class $classHelper */
+        $classHelper = Mage::helper('nosto_tagging/class');
+        /** @var Nosto_Tagging_Model_Meta_Order $order */
+        $order = $classHelper->getOrderClass($mageOrder);
+        $order->loadData($mageOrder);
+        /** @var Nosto_Tagging_Helper_Account $helper */
+        $classHelper = Mage::helper('nosto_tagging/account');
+        $store = $mageOrder->getStore();
+        $account = $classHelper->find($store);
+        /** @var Nosto_Tagging_Helper_Customer $helper */
+        $classHelper = Mage::helper('nosto_tagging/customer');
+        $customerId = $classHelper->getNostoId($mageOrder);
+        if ($account !== null && $account->isConnectedToNosto()) {
+            $operation = new Nosto_Operation_OrderConfirm($account);
+            $operation->send($order, $customerId);
+            if ($dataHelper->getUseInventoryLevel($store)) {
+                $this->syncInventoryLevel($order);
+            }
         }
+
         return true;
     }
 
     /**
-     * Builds the API request and returns it.
+     * Sends product updates to Nosto to keep up with the inventory level
      *
-     * @param NostoAccount $account the Nosto account object.
-     * @param string|null $customerId the Nosto customer ID of the user who placed the order.
-     * @return NostoApiRequest the request object.
+     * @param Nosto_Tagging_Model_Meta_Order $order
      */
-    protected function initApiRequest(NostoAccount $account, $customerId)
+    public function syncInventoryLevel(Nosto_Tagging_Model_Meta_Order $order)
     {
-        $request = new NostoApiRequest();
-        $request->setContentType('application/json');
-        if (!empty($customerId)) {
-            $request->setPath(NostoApiRequest::PATH_ORDER_TAGGING);
-            $request->setReplaceParams(array('{m}' => $account->getName(), '{cid}' => $customerId));
-        } else {
-            $request->setPath(NostoApiRequest::PATH_UNMATCHED_ORDER_TAGGING);
-            $request->setReplaceParams(array('{m}' => $account->getName()));
-        }
-        return $request;
-    }
-
-    /**
-     * Turns an order object into a JSON structure.
-     *
-     * @param Nosto_Tagging_Model_Meta_Order $order the order object.
-     * @return string the JSON structure.
-     */
-    protected function getOrderAsJson(Nosto_Tagging_Model_Meta_Order $order)
-    {
-        /** @var NostoHelperDate $dateHelper */
-        $dateHelper = Nosto::helper('date');
-        $data = array(
-            'order_number' => $order->getOrderNumber(),
-            'external_order_ref' => $order->getExternalOrderRef(),
-            'buyer' => array(),
-            'created_at' => $dateHelper->format($order->getCreatedDate()),
-            'payment_provider' => $order->getPaymentProvider(),
-            'purchased_items' => array(),
-        );
-        if ($order->getOrderStatus()) {
-            $data['order_status_code'] = $order->getOrderStatus()->getCode();
-            $data['order_status_label'] = $order->getOrderStatus()->getLabel();
-        }
-        /** @var NostoHelperPrice $priceHelper */
-        $priceHelper = Nosto::helper('price');
-        foreach ($order->getPurchasedItems() as $item) {
-            $data['purchased_items'][] = array(
-                'product_id' => $item->getProductId(),
-                'quantity' => $item->getQuantity(),
-                'name' => $item->getName(),
-                'unit_price' => $priceHelper->format($item->getUnitPrice()),
-                'price_currency_code' => strtoupper($item->getCurrencyCode()),
-            );
-        }
-        if ($order->getBuyerInfo()) {
-            if ($order->getBuyerInfo()->getFirstName()) {
-                $data['buyer']['first_name'] = $order->getBuyerInfo()->getFirstName();
+        if (self::$syncInventoriesAfterOrder === true) {
+            $purchasedItems = $order->getPurchasedItems();
+            $productIds = array();
+            /* @var Nosto_Tagging_Model_Meta_Order_Item $item */
+            foreach ($purchasedItems as $item) {
+                $productId = $item->getProductId();
+                if (empty($productId) || $productId < 0) {
+                    continue;
+                }
+                $productIds[] = $productId;
             }
-            if ($order->getBuyerInfo()->getLastName()) {
-                $data['buyer']['last_name'] = $order->getBuyerInfo()->getLastName();
-            }
-            if ($order->getBuyerInfo()->getEmail()) {
-                $data['buyer']['email'] = $order->getBuyerInfo()->getEmail();
+            if (!empty($productIds)) {
+                /* @var Nosto_Tagging_Model_Resource_Product_Collection $productIds*/
+                $products= Mage::getModel('nosto_tagging/product')
+                    ->getCollection()
+                    ->addAttributeToSelect('*')
+                    ->addIdFilter($productIds);
+                if (
+                    $products instanceof Nosto_Tagging_Model_Resource_Product_Collection
+                    && !empty($products)
+                ) {
+                    /* @var Nosto_Tagging_Model_Service_Product $productService */
+                    $productService = Mage::getModel('nosto_tagging/service_product');
+                    $productService->updateBatch($products);
+                }
             }
         }
-
-        return json_encode($data);
     }
 }

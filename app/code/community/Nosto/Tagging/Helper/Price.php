@@ -21,9 +21,11 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
+use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Helper class for common price operations.
@@ -34,21 +36,6 @@
  */
 class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
 {
-    /**
-     * Formats price into Nosto format, e.g. 1000.99.
-     *
-     * @param int|float $price the price to format.
-     *
-     * @return string
-     */
-    public function getFormattedPrice($price)
-    {
-        /* @var $nostoPriceHelper NostoHelperPrice */
-        $nostoPriceHelper = Nosto::helper('price');
-
-        return $nostoPriceHelper->format($price);
-    }
-
     /**
      * Gets the unit price for a product model including taxes.
      *
@@ -76,17 +63,18 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
     /**
      * Get unit/final price for a product model.
      *
-     * @param Mage_Catalog_Model_Product $product    the product model.
-     * @param bool                       $finalPrice if final price.
-     * @param bool                       $inclTax    if tax is to be included.
-     *
+     * @param Mage_Catalog_Model_Product $product the product model.
+     * @param bool $finalPrice if final price.
+     * @param bool $inclTax if tax is to be included.
      * @return float
+     * @suppress PhanUndeclaredMethod
      */
     protected function _getProductPrice(
-        $product,
+        Mage_Catalog_Model_Product $product,
         $finalPrice = false,
         $inclTax = true
-    ) {
+    ) 
+    {
         $price = 0;
 
         switch ($product->getTypeId()) {
@@ -117,7 +105,7 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
                     ->addMinimalPrice()
                     ->addTaxPercents()
                     ->load()
-                    ->getFirstItem();
+                    ->getFirstItem(); // @codingStandardsIgnoreLine
                 if ($tmpProduct) {
                     /** @var Mage_Tax_Helper_Data $helper */
                     $helper = Mage::helper('tax');
@@ -138,10 +126,11 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
                     $inclTax
                 );
                 if (!$price) {
-                    $associatedProducts = Mage::getModel(
-                        'catalog/product_type_configurable'
-                    )->getUsedProducts(null, $product);
+                    /** @var Mage_Catalog_Model_Product_Type_Configurable $configurableProduct */
+                    $configurableProduct = Mage::getModel('catalog/product_type_configurable');
+                    $associatedProducts = $configurableProduct->getUsedProducts(null, $product);
                     $lowestPrice = false;
+                    /** @var Mage_Catalog_Model_Product $associatedProduct */
                     foreach ($associatedProducts as $associatedProduct) {
                         /* @var Mage_Catalog_Model_Product $productModel */
                         $productModel = Mage::getModel('catalog/product')->load(
@@ -174,16 +163,17 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
     /**
      * Returns the price from product
      *
-     * @param $product
+     * @param Mage_Catalog_Model_Product $product
      * @param bool $finalPrice
      * @param bool $inclTax
      * @return float
      */
     protected function _getDefaultFromProduct(
-        $product,
+        Mage_Catalog_Model_Product $product,
         $finalPrice = false,
         $inclTax = true
-    ) {
+    ) 
+    {
         /** @var Mage_Tax_Helper_Data $helper */
         $helper = Mage::helper('tax');
         $price = $finalPrice
@@ -204,14 +194,9 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
     public function convertToDefaultCurrency($price, Mage_Core_Model_Store $store)
     {
         if (!is_numeric($price)) {
-            Mage::log(
-                sprintf(
-                    'price must be a numeric value in %s, got %s.',
-                    __CLASS__,
-                    $price
-                ),
-                Zend_Log::WARN,
-                Nosto_Tagging_Model_Base::LOG_FILE_NAME
+            NostoLog::error(
+                'price must be a numeric value in %s, got %s.',
+                array(__CLASS__, $price)
             );
             $price = 0;
         }
@@ -237,7 +222,8 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
         /** @var Mage_Directory_Helper_Data $helper */
         $helper = Mage::helper('directory');
         $quantity = (double)$item->getQtyOrdered();
-        $basePrice = $item->getBaseRowTotal() + $item->getBaseTaxAmount() + $item->getBaseHiddenTaxAmount() - $item->getBaseDiscountAmount();
+        $basePrice = $item->getBaseRowTotal() + $item->getBaseTaxAmount()
+            + $item->getBaseHiddenTaxAmount() - $item->getBaseDiscountAmount();
         $orderCurrencyCode = $item->getOrder()->getOrderCurrencyCode();
         $baseCurrencyCode = $item->getOrder()->getBaseCurrencyCode();
         if ($orderCurrencyCode != $baseCurrencyCode) {
@@ -250,9 +236,9 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
             $priceInOrderCurrency = $basePrice;
         }
         if ($quantity > 1) {
-            $priceInOrderCurrency = round($priceInOrderCurrency/$quantity, 2);
+            $priceInOrderCurrency = round($priceInOrderCurrency / $quantity, 2);
         }
-        
+
         return $priceInOrderCurrency;
     }
 
@@ -260,8 +246,8 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
      * If the store uses multiple currencies the prices are converted from base
      * currency into given currency. Otherwise the given price is returned.
      *
-     * @param float                 $basePrice The price of a product in base currency
-     * @param string                $currentCurrencyCode
+     * @param float $basePrice The price of a product in base currency
+     * @param string $currentCurrencyCode
      * @param Mage_Core_Model_Store $store
      * @return float
      */
@@ -272,7 +258,9 @@ class Nosto_Tagging_Helper_Price extends Mage_Core_Helper_Abstract
         $baseCurrencyCode = $store->getBaseCurrencyCode();
         $taggingPrice = $basePrice;
         if ($helper->multiCurrencyDisabled($store) && $currentCurrencyCode !== $store->getBaseCurrencyCode()) {
-            $taggingPrice = Mage::helper('directory')->currencyConvert(
+            /** @var Mage_Directory_Helper_Data $directoryHelper */
+            $directoryHelper = Mage::helper('directory');
+            $taggingPrice = $directoryHelper->currencyConvert(
                 $basePrice,
                 $baseCurrencyCode,
                 $currentCurrencyCode

@@ -21,11 +21,12 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../bootstrap.php'; // @codingStandardsIgnoreLine
+use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Event observer model.
@@ -77,54 +78,13 @@ class Nosto_Tagging_Model_Observer
             /** @var Mage_Catalog_Model_Product $product */
             /** @noinspection PhpUndefinedMethodInspection */
             $product = $observer->getEvent()->getProduct();
-            // Always "upsert" the product for all stores it is available in.
-            // This is done to avoid data inconsistencies as even if a product
-            // is edited for only one store, the updated data can reflect in
-            // other stores as well.
-            foreach ($product->getStoreIds() as $storeId) {
-                $store = Mage::app()->getStore($storeId);
-                /** @var Nosto_Tagging_Helper_Account $helper */
-                $helper = Mage::helper('nosto_tagging/account');
-                $account = $helper->find($store);
 
-                /* @var $nostoHelper Nosto_Tagging_Helper_Data */
-                $nostoHelper = Mage::helper('nosto_tagging');
-                if ($account === null || !$account->isConnectedToNosto()
-                    || !$nostoHelper->getUseProductApi($store)) {
-                    continue;
-                }
-
-                // Load the product model for this particular store view.
-                /** @var Mage_Catalog_Model_Product $catalog */
-                $catalog = Mage::getModel('catalog/product');
-                /** @noinspection PhpUndefinedMethodInspection */
-                $product = $catalog
-                    ->setStoreId($store->getId())
-                    ->load($product->getId());
-                if (is_null($product)) {
-                    continue;
-                }
-
-                /* @var Mage_Core_Model_App_Emulation $emulation */
-                $emulation = Mage::getSingleton('core/app_emulation');
-                $env = $emulation->startEnvironmentEmulation($store->getId());
-                /** @var Nosto_Tagging_Model_Meta_Product $model */
-                $model = Mage::getModel('nosto_tagging/meta_product');
-                $model->loadData($product, $store);
-
-                // Only send product update if we have all required
-                // data for the product model.
-                $validator = new NostoValidator($model);
-                if ($validator->validate()) {
-                    try {
-                        $service = new NostoOperationProduct($account);
-                        $service->addProduct($model);
-                        $service->upsert();
-                    } catch (NostoException $e) {
-                        Mage::log("\n" . $e, Zend_Log::ERR, 'nostotagging.log');
-                    }
-                }
-                $emulation->stopEnvironmentEmulation($env);
+            try {
+                /* @var Nosto_Tagging_Model_Service_Product $service */
+                $service = Mage::getModel('nosto_tagging/service_product');
+                $service->updateProduct($product);
+            } catch (Nosto_NostoException$e) {
+                NostoLog::exception($e);
             }
         }
 
@@ -163,11 +123,11 @@ class Nosto_Tagging_Model_Observer
                 $model = Mage::getModel('nosto_tagging/meta_product');
                 $model->setProductId($product->getId());
                 try {
-                    $service = new NostoOperationProduct($account);
+                    $service = new Nosto_Operation_UpsertProduct($account);
                     $service->addProduct($model);
-                    $service->delete();
-                } catch (NostoException $e) {
-                    Mage::log("\n" . $e, Zend_Log::ERR, 'nostotagging.log');
+                    $service->upsert();
+                } catch (Nosto_NostoException $e) {
+                    NostoLog::exception($e);
                 }
                 $emulation->stopEnvironmentEmulation($env);
             }
@@ -188,35 +148,15 @@ class Nosto_Tagging_Model_Observer
     public function sendOrderConfirmation(Varien_Event_Observer $observer)
     {
         if (Mage::helper('nosto_tagging')->isModuleEnabled()) {
+            /** @var Mage_Sales_Model_Order $mageOrder */
+            /** @noinspection PhpUndefinedMethodInspection */
+            $mageOrder = $observer->getEvent()->getOrder();
+            /** @var Nosto_Tagging_Model_Service_Order $service */
+            $service = Mage::getModel('nosto_tagging/service_order');
             try {
-                /** @var Mage_Sales_Model_Order $mageOrder */
-                /** @noinspection PhpUndefinedMethodInspection */
-                $mageOrder = $observer->getEvent()->getOrder();
-
-                if ($mageOrder instanceof Mage_Sales_Model_Order) {
-                    /** @var Nosto_Tagging_Helper_Class $helper */
-                    $helper = Mage::helper('nosto_tagging/class');
-                    /** @var Nosto_Tagging_Model_Meta_Order $order */
-                    $order = $helper->getOrderClass($mageOrder);
-                    $order->loadData($mageOrder);
-                    /** @var Nosto_Tagging_Helper_Account $helper */
-                    $helper = Mage::helper('nosto_tagging/account');
-                    $account = $helper->find($mageOrder->getStore());
-                    /** @var Nosto_Tagging_Helper_Customer $helper */
-                    $helper = Mage::helper('nosto_tagging/customer');
-                    $customerId = $helper->getNostoId($mageOrder);
-                    if ($account !== null && $account->isConnectedToNosto()) {
-                        /** @var Nosto_Tagging_Model_Service_Order $service */
-                        $service = Mage::getModel('nosto_tagging/service_order');
-                        $service->confirm($order, $account, $customerId);
-                    }
-                }
-            } catch (NostoException $e) {
-                Mage::log(
-                    "\n" . $e->__toString(),
-                    Zend_Log::ERR,
-                    'nostotagging.log'
-                );
+                $service->confirm($mageOrder);
+            } catch (Exception $e) {
+                NostoLog::exception($e);
             }
         }
 
@@ -238,8 +178,8 @@ class Nosto_Tagging_Model_Observer
             /** @var Nosto_Tagging_Helper_Account $accountHelper */
             $accountHelper = Mage::helper('nosto_tagging/account');
             $error = false;
+            /** @var Mage_Core_Model_Store $store */
             foreach (Mage::app()->getStores() as $store) {
-                /** @var Mage_Core_Model_Store $store */
                 if (
                     !$helper->isScheduledCurrencyExchangeRateUpdateEnabled($store)
                     || !$helper->isMultiCurrencyMethodExchangeRate($store)
@@ -247,7 +187,7 @@ class Nosto_Tagging_Model_Observer
                     continue;
                 }
                 $account = $accountHelper->find($store);
-                if (is_null($account)) {
+                if ($account === null) {
                     continue;
                 }
                 if (!$accountHelper->updateCurrencyExchangeRates($account, $store)) {
@@ -257,7 +197,10 @@ class Nosto_Tagging_Model_Observer
             if ($error) {
                 throw Mage::exception(
                     'Mage_Cron',
-                    'There was an error updating the exchange rates. More info in "var/log/nostotagging.log".'
+                    sprintf(
+                        'There was an error updating the exchange rates. More info in "%".',
+                        Nosto_Tagging_Model_Base::LOG_FILE_NAME
+                    )
                 );
             }
         }
@@ -273,7 +216,7 @@ class Nosto_Tagging_Model_Observer
      *
      * @return Nosto_Tagging_Model_Observer
      */
-    public function syncNostoAccount(/** @noinspection PhpUnusedParameterInspection */
+    public function syncNostoAccount(/** @noinspection PhpUnusedParameterInspection */ // @codingStandardsIgnoreLine
         Varien_Event_Observer $observer)
     {
         /** @var Nosto_Tagging_Helper_Data $helper */
@@ -284,38 +227,35 @@ class Nosto_Tagging_Model_Observer
             /** @var Mage_Core_Model_Store $store */
             foreach (Mage::app()->getStores() as $store) {
                 $account = $accountHelper->find($store);
-                if ($account instanceof NostoAccount === false) {
+                if ($account instanceof Nosto_Object_Signup_Account === false) {
                     continue;
                 }
                 /* @var Mage_Core_Model_App_Emulation $emulation */
                 $emulation = Mage::getSingleton('core/app_emulation');
                 $env = $emulation->startEnvironmentEmulation($store->getId());
                 if (!$accountHelper->updateAccount($account, $store)) {
-                    Mage::log(
-                        sprintf(
-                            'Failed sync account #%s for store #%s in class %s',
+                    NostoLog::error(
+                        'Failed sync account #%s for store #%s in class %s',
+                        array(
                             $account->getName(),
                             $store->getName(),
                             __CLASS__
-                        ),
-                        Zend_Log::WARN,
-                        Nosto_Tagging_Model_Base::LOG_FILE_NAME
+                        )
                     );
                 }
                 if ($helper->isMultiCurrencyMethodExchangeRate($store)) {
-                    if (!$accountHelper->updateCurrencyExchangeRates(
-                        $account, $store
-                    )
+                    if (
+                        !$accountHelper->updateCurrencyExchangeRates(
+                            $account, $store
+                        )
                     ) {
-                        Mage::log(
-                            sprintf(
-                                'Failed sync currency rates #%s for store #%s in class %s',
+                        NostoLog::error(
+                            'Failed sync currency rates #%s for store #%s in class %s',
+                            array(
                                 $account->getName(),
                                 $store->getName(),
                                 __CLASS__
-                            ),
-                            Zend_Log::WARN,
-                            Nosto_Tagging_Model_Base::LOG_FILE_NAME
+                            )
                         );
                     }
                 }

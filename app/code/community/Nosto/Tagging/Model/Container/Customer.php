@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -40,7 +40,6 @@ class Nosto_Tagging_Model_Container_Customer extends Enterprise_PageCache_Model_
     /**
      * Get identifier from cookies.
      *
-     * @deprecated since 1.12.0.0
      * @return string
      */
     protected function _getIdentifier()
@@ -64,9 +63,8 @@ class Nosto_Tagging_Model_Container_Customer extends Enterprise_PageCache_Model_
         /** @noinspection PhpUndefinedFieldInspection */
         /** @noinspection PhpDeprecationInspection */
         return 'CONTAINER_NOSTO_TAGGING_CUSTOMER_'
-        . md5(
-            $this->_placeholder->getAttribute('cache_id')
-            . $this->_getIdentifier()
+        . md5( // @codingStandardsIgnoreLine
+            $this->_placeholder->getAttribute('cache_id') . $this->_getIdentifier()
         );
     }
 

@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2016 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -33,6 +33,7 @@
  * @package  Nosto_Tagging
  * @author   Nosto Solutions Ltd <magento@nosto.com>
  */
+
 /** @noinspection PhpUndefinedClassInspection */
 class Nosto_Tagging_Model_Container_Cart extends Enterprise_PageCache_Model_Container_Advanced_Quote
 {
@@ -46,13 +47,9 @@ class Nosto_Tagging_Model_Container_Cart extends Enterprise_PageCache_Model_Cont
     {
         /** @noinspection PhpUndefinedMethodInspection */
         /** @noinspection PhpUndefinedClassInspection */
-        return $this->_getCookieValue(
-            Enterprise_PageCache_Model_Cookie::COOKIE_CART, ''
-        )
+        return $this->_getCookieValue(Enterprise_PageCache_Model_Cookie::COOKIE_CART, '')
         . '_'
-        . $this->_getCookieValue(
-            Enterprise_PageCache_Model_Cookie::COOKIE_CUSTOMER, ''
-        );
+        . $this->_getCookieValue(Enterprise_PageCache_Model_Cookie::COOKIE_CUSTOMER, '');
     }
 
     /**

@@ -1,10 +1,69 @@
 All notable changes to this project will be documented in this file. This project adheres to Semantic Versioning.
 
+### 3.1.0
+* Add support for adding SKUs to cart from Nosto recommendations
+* Add low stock indication to product tag1 attribute
+* Add possibility to use custom thumbnail URL in recommendations
+* Render Nosto javascript stub only when Nosto account is installed
+* Add debug info if Nosto's product model has been overridden
+
+### 3.0.2
+* Fix the attribute name for SKU custom fields
+
+### 3.0.1
+* Update SDK to fix the missing of default nosto backend url issue
+
+### 3.0.0
+Major changes
+* Add support for restore cart link and create cart restore functionality
+* Add support for product variations (SKUs)
+* Possibility to enable / disable Nosto features from advanced settings
+* Introduce "pearify" to generate (rename) autoloadable classes from 3rd party libraries / composer packages
+* Refactor the codebase to use Nosto PHP SDK version 3.0.0
+* Refactor signup and oauth to use ready implementations from SDK
+   
+Bugfixes and enhancements
+* Fix the add to cart function to respect the store's secure (https) settings
+* Fix the order handling to support multiple Klarna extensions
+* Fix custom attribute handling for arrays
+* Fix displaying the exchange rate cron drop down
+* Introduce helper for logging
+
+### 2.11.4
+* Fix the array keys in category building
+* Include only active categories into tagging
+
+### 2.11.3
+* Remove price formatting from product prices
+* Implement method for loading exchange rates into the collection
+
+### 2.11.2
+* Fixed a bug that caused issues when flat tables were enabled and a product was updated from the main store scope
+
+### 2.11.1
+* Add support for Magento core modules version 1.9.3.2
+
+### 2.11.0
+* Refactor the extension to meet Magento Extension Quality Program Coding Standard (MEQP1)
+
+### 2.10.0
+* Add support for sending following attributes to Nosto
+ * rating and reviews data to Nosto (Magento native ratings and Yotpo)
+ * alternative images
+ * inventory level
+ * supplier cost
+* Improve the comparison of original installed store url and the current one
+* Send integrated modules info to Nosto
+* Technical improvements
+ * Send inventory level to Nosto after purchase
+ * Create product service and refactor order services
+ * Add support for sending batch updates via product service
+
 ### 2.9.0
 * Add support for Vaimo Klarna checkout extension
 * Add support for new product attributes
 * Add "js stub" for Nosto javascript
-* Add possilibity to run Nosto exchange rate cron hourly
+* Add possibility to run Nosto exchange rate cron hourly
 * Fix issue with configurable product visibility
 * Fix oauth redirection URL issue when store codes are added to URLs
 * Display applicable Nosto settings in all configuration scopes
