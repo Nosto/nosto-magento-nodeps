@@ -46,6 +46,16 @@ abstract class Nosto_Operation_AbstractOperation
     const CONTENT_TYPE_APPLICATION_JSON = 'application/json';
 
     /**
+     * @var int timeout for waiting response from the api, in second
+     */
+    private $responseTimeout = 5;
+
+    /**
+     * @var int timeout for connecting to the api, in second
+     */
+    private $connectTimeout = 5;
+
+    /**
      * Helper method to throw an exception when an API or HTTP endpoint responds
      * with a non-200 status code.
      *
@@ -77,6 +87,8 @@ abstract class Nosto_Operation_AbstractOperation
         }
 
         $request = new Nosto_Request_Api_ApiRequest();
+        $request->setResponseTimeout($this->getResponseTimeout());
+        $request->setConnectTimeout($this->getConnectTimeout());
         $request->setContentType(self::CONTENT_TYPE_APPLICATION_JSON);
         $request->setAuthBasic('', $token->getValue());
         return $request;
@@ -97,8 +109,46 @@ abstract class Nosto_Operation_AbstractOperation
         }
 
         $request = new Nosto_Request_Http_HttpRequest();
+        $request->setResponseTimeout($this->getResponseTimeout());
+        $request->setConnectTimeout($this->getConnectTimeout());
         $request->setContentType(self::CONTENT_TYPE_URL_FORM_ENCODED);
         $request->setAuthBasic('', $token->getValue());
         return $request;
+    }
+
+    /**
+     * Get response timeout in second
+     * @return int response timeout in second
+     */
+    public function getResponseTimeout()
+    {
+        return $this->responseTimeout;
+    }
+
+    /**
+     * Set response timeout in second
+     * @param int $responseTimeout in second
+     */
+    public function setResponseTimeout($responseTimeout)
+    {
+        $this->responseTimeout = $responseTimeout;
+    }
+
+    /**
+     * connect timeout in second
+     * @return int connect timeout in second
+     */
+    public function getConnectTimeout()
+    {
+        return $this->connectTimeout;
+    }
+
+    /**
+     * Set connect timeout in second
+     * @param int $connectTimeout in second
+     */
+    public function setConnectTimeout($connectTimeout)
+    {
+        $this->connectTimeout = $connectTimeout;
     }
 }

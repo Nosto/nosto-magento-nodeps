@@ -95,7 +95,7 @@ class Nosto_Operation_OAuth_AuthorizationCode
         }
 
         $request = new Nosto_Request_Http_HttpRequest();
-        $request->setUrl(self::getBaseURL() . self::PATH_TOKEN);
+        $request->setUrl(Nosto_Nosto::getOAuthBaseUrl() . self::PATH_TOKEN);
         $request->setReplaceParams(
             array(
                 '{cid}' => $this->clientId,
@@ -118,16 +118,5 @@ class Nosto_Operation_OAuth_AuthorizationCode
         }
 
         return Nosto_Object_NostoOAuthToken::create($result);
-    }
-
-    /**
-     * Returns the base URL by reading the environment and system variables. This
-     * value can be overridden for testing purposes byt editing the .env file
-     *
-     * @return string the base URL for the endpoint
-     */
-    final public static function getBaseURL()
-    {
-        return Nosto_Nosto::getEnvVariable('NOSTO_OAUTH_BASE_URL', Nosto_Nosto::DEFAULT_NOSTO_OAUTH_BASE_URL);
     }
 }

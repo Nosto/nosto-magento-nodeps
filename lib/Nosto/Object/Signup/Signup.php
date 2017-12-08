@@ -78,7 +78,7 @@ class Nosto_Object_Signup_Signup extends Nosto_Object_Settings implements Nosto_
     private $platform;
 
     /**
-     * @var string a partner code for revenue attribution if one has been given
+     * @var string|null a partner code for revenue attribution if one has been given
      */
     private $partnerCode;
 
@@ -92,7 +92,7 @@ class Nosto_Object_Signup_Signup extends Nosto_Object_Settings implements Nosto_
      *
      * @param string $platform
      * @param string $signupApiToken
-     * @param string $partnerCode
+     * @param string|null $partnerCode
      */
     public function __construct($platform, $signupApiToken, $partnerCode = null)
     {

@@ -60,17 +60,6 @@ class Nosto_Request_Api_ApiRequest extends Nosto_Request_Http_HttpRequest
      */
     public function setPath($path)
     {
-        $this->setUrl(self::getBaseURL() . $path);
-    }
-
-    /**
-     * Returns the base URL by reading the environment and system variables. This
-     * value can be overridden for testing purposes byt editing the .env file
-     *
-     * @return string the base URL for the endpoint
-     */
-    final public static function getBaseURL()
-    {
-        return Nosto_Nosto::getEnvVariable('NOSTO_API_BASE_URL', Nosto_Nosto::DEFAULT_NOSTO_API_BASE_URL);
+        $this->setUrl(Nosto_Nosto::getApiBaseURL() . $path);
     }
 }

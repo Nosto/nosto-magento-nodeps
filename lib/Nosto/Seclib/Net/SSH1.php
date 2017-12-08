@@ -911,7 +911,7 @@ class Nosto_Seclib_Net_SSH1
     /**
      * Returns the output of an interactive shell when there's a match for $expect
      *
-     * $expect can take the form of a string literal or, if $mode == self::READ__REGEX,
+     * $expect can take the form of a string literal or, if $mode == self::READ_REGEX,
      * a regular expression.
      *
      * @see self::write()
@@ -920,7 +920,7 @@ class Nosto_Seclib_Net_SSH1
      * @return bool
      * @access public
      */
-    function read($expect, $mode = self::READ__SIMPLE)
+    function read($expect, $mode = self::READ_SIMPLE)
     {
         if (!($this->bitmap & self::MASK_LOGIN)) {
             user_error('Operation disallowed prior to login()');
@@ -934,7 +934,7 @@ class Nosto_Seclib_Net_SSH1
 
         $match = $expect;
         while (true) {
-            if ($mode == self::READ__REGEX) {
+            if ($mode == self::READ_REGEX) {
                 preg_match($expect, $this->interactiveBuffer, $matches);
                 $match = isset($matches[0]) ? $matches[0] : '';
             }

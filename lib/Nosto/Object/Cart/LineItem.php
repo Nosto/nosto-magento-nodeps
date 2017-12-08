@@ -41,7 +41,7 @@
  * the model when rendering the cart and OrderConfirm tagging and also for in OrderConfirm confirmation
  * API calls
  */
-class Nosto_Object_Cart_LineItem extends Nosto_AbstractObject implements Nosto_Types_LineItemInterface
+class Nosto_Object_Cart_LineItem extends Nosto_AbstractObject implements Nosto_Types_LineItemInterface, Nosto_Types_MarkupableInterface
 {
     /**
      * Product id for non saleable products such as shipping and discounts
@@ -182,5 +182,10 @@ class Nosto_Object_Cart_LineItem extends Nosto_AbstractObject implements Nosto_T
     public function setPriceCurrencyCode($priceCurrencyCode)
     {
         $this->priceCurrencyCode = strtoupper($priceCurrencyCode);
+    }
+
+    public function getMarkupKey()
+    {
+        return "line_item";
     }
 }

@@ -63,4 +63,24 @@ abstract class Nosto_AbstractObject
             $name
         ));
     }
+
+    /**
+     * Serialize to html
+     *
+     * @return string html
+     */
+    public function toHtml()
+    {
+        return Nosto_Helper_HtmlMarkupSerializationHelper::objectToMarkup($this, '', 0, 2);
+    }
+
+    /**
+     * Serialize to json
+     *
+     * @return string json
+     */
+    public function toJson()
+    {
+        return Nosto_Helper_SerializationHelper::serialize($this);
+    }
 }

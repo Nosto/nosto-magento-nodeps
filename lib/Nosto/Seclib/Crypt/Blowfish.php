@@ -317,6 +317,9 @@ class Nosto_Seclib_Crypt_Blowfish extends Nosto_Seclib_Crypt_Base
     function isValidEngine($engine)
     {
         if ($engine == self::ENGINE_OPENSSL) {
+            if (version_compare(PHP_VERSION, '5.3.7') < 0 && $this->key_length != 16) {
+                return false;
+            }
             if ($this->key_length < 16) {
                 return false;
             }

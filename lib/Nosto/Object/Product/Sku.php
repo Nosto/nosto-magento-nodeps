@@ -39,7 +39,7 @@
 /**
  * Model for sku information
  */
-class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Types_Product_SkuInterface
+class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Types_Product_SkuInterface, Nosto_Types_MarkupableInterface
 {
     /**
      * The id of the SKU
@@ -99,7 +99,6 @@ class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Typ
 
     /**
      * An array of custom attributes
-     * s
      * @var array
      */
     private $customFields = array();
@@ -274,6 +273,9 @@ class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Typ
      */
     public function addCustomField($attribute, $value)
     {
+        if ($this->customFields === null) {
+            $this->customFields = array();
+        }
         $this->customFields[$attribute] = $value;
     }
 
@@ -289,5 +291,10 @@ class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Typ
     {
         $this->availability = $available ?
             Nosto_Types_Product_ProductInterface::IN_STOCK : Nosto_Types_Product_ProductInterface::OUT_OF_STOCK;
+    }
+
+    public function getMarkupKey()
+    {
+        return 'nosto_sku';
     }
 }

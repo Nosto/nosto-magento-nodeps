@@ -68,7 +68,7 @@ class Nosto_Object_Notification extends Nosto_AbstractObject implements Nosto_Ty
     private $message;
 
     /**
-     * @var int type of the notification
+     * @var string type of the notification
      * @see NotificationInterface::TYPE_* constants
      */
     private $notificationType;
@@ -167,7 +167,7 @@ class Nosto_Object_Notification extends Nosto_AbstractObject implements Nosto_Ty
      * Setter for notification type
      *
      * @see NotificationInterface::TYPE_*
-     * @param int $notificationType
+     * @param string $notificationType
      */
     public function setNotificationType($notificationType)
     {

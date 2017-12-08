@@ -40,6 +40,26 @@
  * Model used for containing the customer making an OrderConfirm/purchase. This information
  * creates a customer on Nosto.
  */
-class Nosto_Object_Order_Buyer extends Nosto_Object_AbstractPerson implements Nosto_Types_Order_BuyerInterface
+class Nosto_Object_Order_Buyer extends Nosto_Object_AbstractPerson implements Nosto_Types_Order_BuyerInterface, Nosto_Types_MarkupableInterface, Nosto_Types_SanitizableInterface
 {
+    /**
+     * @inheritdoc
+     */
+    public function getMarkupKey()
+    {
+        return 'buyer';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function sanitize()
+    {
+        $sanitized = clone $this;
+        $sanitized->setPhone(null);
+        $sanitized->setPostCode(null);
+        $sanitized->setCountry(null);
+
+        return $sanitized;
+    }
 }

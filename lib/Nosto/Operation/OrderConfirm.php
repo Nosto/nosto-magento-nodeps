@@ -66,7 +66,7 @@ class Nosto_Operation_OrderConfirm extends Nosto_Operation_AbstractOperation
      * Sends the Nosto_Operation_OrderConfirm confirmation to Nosto.
      *
      * @param Nosto_Types_Order_OrderInterface $order the placed Nosto_Operation_OrderConfirm model.
-     * @param null $customerId the Nosto customer ID of the user who placed the OrderConfirm.
+     * @param string|null $customerId the Nosto customer ID of the user who placed the OrderConfirm.
      * @throws Nosto_NostoException on failure.
      * @return true on success.
      */

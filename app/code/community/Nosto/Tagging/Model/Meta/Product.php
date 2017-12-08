@@ -1,9 +1,9 @@
 <?php
 /**
  * Magento
- *  
+ *
  * NOTICE OF LICENSE
- *  
+ *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
@@ -11,13 +11,13 @@
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@magentocommerce.com so we can send you a copy immediately.
- *  
+ *
  * DISCLAIMER
- *  
+ *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
  * needs please refer to http://www.magentocommerce.com for more information.
- *  
+ *
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
@@ -85,6 +85,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      *
      * @param Mage_Catalog_Model_Product $product the product model.
      * @param Mage_Core_Model_Store|null $store the store to get the product data for.
+     * @throws Nosto_NostoException
      */
     public function loadData(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store = null)
     {
@@ -99,12 +100,11 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         $this->setProductId($product->getId());
         $this->setName($product->getName());
         $this->setImageUrl($this->buildImageUrl($product, $store));
-        $this->setPrice($this->buildProductPrice($product, $store));
-        $this->setListPrice($this->buildProductListPrice($product, $store));
         $this->setPriceCurrencyCode($priceHelper->getTaggingCurrencyCode($store->getCurrentCurrencyCode(), $store));
         $this->setAvailability($this->buildAvailability($product));
         $this->setCategories($this->buildCategories($product));
-
+        $this->setPrice($this->buildProductPrice($product, $store));
+        $this->setListPrice($this->buildProductListPrice($product, $store));
         if ($product->hasData('short_description')) {
             $this->setDescription($product->getData('short_description'));
         }
@@ -118,10 +118,6 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         if (($tags = $this->buildTags($product, $store)) !== array()) {
             $this->setTag1($tags);
         }
-        if (!$dataHelper->multiCurrencyDisabled($store)) {
-            $this->setVariationId($store->getBaseCurrencyCode());
-        }
-
         $this->amendAttributeTags($product, $store);
         $this->amendReviews($product, $store);
         $this->amendCustomizableAttributes($product, $store);
@@ -134,6 +130,44 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         if ($dataHelper->getUseSkus($store)) {
             $this->amendSkus($product, $store);
         }
+
+        if ($dataHelper->isMultiCurrencyMethodExchangeRate($store)) {
+            $this->setVariationId($store->getBaseCurrencyCode());
+        } elseif ($dataHelper->isVariationEnabled($store)) {
+            $this->amendVariations($product, $store);
+        }
+
+        Mage::dispatchEvent(
+            Nosto_Tagging_Helper_Event::EVENT_NOSTO_PRODUCT_LOAD_AFTER,
+            array(
+                'product' => $this,
+                'magentoProduct' => $product
+            )
+        );
+    }
+
+    /**
+     * Build price variations. It must be called after the currency has been set.
+     * Because this method set variation currency to the product tagging currency.
+     *
+     * @param Mage_Catalog_Model_Product $product
+     * @param Mage_Core_Model_Store $store
+     */
+    protected function amendVariations(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
+    {
+        /* @var Nosto_Tagging_Helper_Variation $variationHelper  */
+        $variationHelper = Mage::helper('nosto_tagging/variation');
+        $this->setVariationId($variationHelper->getDefaultVariationId($store));
+
+        /** @var Nosto_Tagging_Model_Meta_Variation_Collection $variationCollection */
+        $variationCollection = Mage::getModel('nosto_tagging/meta_variation_collection');
+        $variationCollection->loadData(
+            $product,
+            $this->getAvailability(),
+            $this->getPriceCurrencyCode(),
+            $store
+        );
+        $this->setVariations($variationCollection);
     }
 
     /**
@@ -199,12 +233,14 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
                 $tags[] = $tag->getName();
             }
         }
-
         if (!$product->canConfigure()) {
             $tags[] = self::ADD_TO_CART;
         }
-
-        if (Nosto_Tagging_Model_Meta_Product_Tags_LowStock::build($product)) {
+        /** @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging');
+        if ($dataHelper->getUseLowStock($store)
+            && Nosto_Tagging_Model_Meta_Product_Tags_Lowstock::build($product)
+        ) {
             $tags[] = self::LOW_STOCK;
         }
 
@@ -244,7 +280,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
     protected function amendAlternativeImages(
         Mage_Catalog_Model_Product $product,
         Mage_Core_Model_Store $store
-    ) 
+    )
     {
         /* @var Mage_Catalog_Model_Product_Attribute_Media_Api $mediaApi */
         $mediaApi = Mage::getModel('catalog/product_attribute_media_api');
@@ -381,7 +417,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      * old customisations
      *
      * @param string $method
-     * @param $args
+     * @param array $args
      * @return mixed
      */
     public function __call($method, $args)
@@ -458,25 +494,27 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      *
      * @param Mage_Catalog_Model_Product $product
      * @param string $attributeName
-     * @return string
+     * @return string|null
      * @suppress PhanUndeclaredMethod
      */
     protected function getAttributeValue(Mage_Catalog_Model_Product $product, $attributeName)
     {
         $attribute = $product->getResource()->getAttribute($attributeName);
-        $attributeValue = null;
         if ($attribute instanceof Mage_Catalog_Model_Resource_Eav_Attribute) {
-            $attributeData = $product->getData($attributeName);
             /** @noinspection PhpParamsInspection */
             $attributeValue = $product->getAttributeText($attributeName);
-            if (empty($attributeValue) && is_scalar($attributeData)) {
-                $attributeValue = trim($attributeData);
+            if (empty($attributeValue)) {
+                $attributeValue = $product->getData($attributeName);
+            }
+
+            if (is_scalar($attributeValue)) {
+                return trim($attributeValue);
             } elseif (is_array($attributeValue)) {
-                $attributeValue = implode(',', $attributeValue);
+                return implode(',', $attributeValue);
             }
         }
 
-        return $attributeValue;
+        return null;
     }
 
     /**
@@ -549,7 +587,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      * @return array
      * @suppress PhanDeprecatedProperty
      */
-    protected function __getTags()
+    protected function __getTags()// @codingStandardsIgnoreLine
     {
         /** @noinspection PhpDeprecationInspection */
         return $this->_tags;
@@ -570,22 +608,44 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      * Reloads the product info from a Magento product model.
      *
      * @param Mage_Catalog_Model_Product $product the product model to reload
-     * @param Mage_Core_Model_Store|null $store the store to get the product data for.
+     * @param Mage_Core_Model_Store $store the store to get the product data for.
      *
      * @return bool returns false if the product is not available in a given store
      */
     public function reloadData(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
     {
-        $return = false;
         /** @var Mage_Catalog_Model_Product $productModel */
         $productModel = Mage::getModel('catalog/product');
         /** @noinspection PhpUndefinedMethodInspection */
         $reloadedProduct = $productModel->setStoreId($store->getId())->load($product->getId());
         if ($reloadedProduct instanceof Mage_Catalog_Model_Product) {
-            $this->loadData($reloadedProduct, $store);
-            $return = true;
+            try {
+                $this->loadData($reloadedProduct, $store);
+
+                return true;
+            } catch (Nosto_NostoException $e) {
+                Nosto_Tagging_Helper_Log::exception($e);
+            }
         }
 
-        return $return;
+        return false;
+    }
+
+    /**
+     * Builds the availability for the product.
+     *
+     * @param Mage_Catalog_Model_Product $product the product model.
+     * @return string
+     */
+    protected function buildAvailability(Mage_Catalog_Model_Product $product)
+    {
+        $availability = Nosto_Types_Product_ProductInterface::OUT_OF_STOCK;
+        if (!$product->isVisibleInSiteVisibility()) {
+            $availability = Nosto_Types_Product_ProductInterface::INVISIBLE;
+        } elseif ($product->isAvailable()) {
+            $availability = Nosto_Types_Product_ProductInterface::IN_STOCK;
+        }
+
+        return $availability;
     }
 }

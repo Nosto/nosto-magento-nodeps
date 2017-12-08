@@ -65,6 +65,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     const XML_PATH_MULTI_CURRENCY_METHOD = 'nosto_tagging/multi_currency/method';
 
     /**
+     * Path to store config of price variation switch
+     */
+    const XML_PATH_VARIATION_SWITCH = 'nosto_tagging/variation/switch';
+
+    /**
      * Path to store config scheduled currency exchange rate update enabled setting.
      */
     const XML_PATH_SCHEDULED_CURRENCY_EXCHANGE_RATE_UPDATE_ENABLED
@@ -74,11 +79,6 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Multi currency method option for currency exchange rates.
      */
     const MULTI_CURRENCY_METHOD_EXCHANGE_RATE = 'exchangeRate';
-
-    /**
-     * Multi currency method option for price variations in tagging.
-     */
-    const MULTI_CURRENCY_METHOD_PRICE_VARIATION = 'priceVariation';
 
     /**
      * No multi currency
@@ -104,6 +104,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Path to store config for using inventory level
      */
     const XML_PATH_USE_INVENTORY_LEVEL = 'nosto_tagging/general/use_inventory_level';
+
+    /**
+     * Path to store config for tagging low stock
+     */
+    const XML_PATH_USE_LOW_STOCK = 'nosto_tagging/general/use_low_stock';
 
     /**
      * @var boolean the path for setting for product urls
@@ -422,6 +427,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
         return ($method === self::MULTI_CURRENCY_DISABLED);
     }
 
+    public function isVariationEnabled($store = null)
+    {
+        return (bool)Mage::getStoreConfig(self::XML_PATH_VARIATION_SWITCH, $store);
+    }
+
     /**
      * Checks if the multi currency method in use is the "exchangeRate", i.e.
      * the product prices in the recommendation is updated through the Exchange
@@ -494,6 +504,17 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * Returns on/off setting for using low stock
+     *
+     * @param Mage_Core_Model_Store|null $store the store model or null.
+     * @return boolean
+     */
+    public function getUseLowStock($store = null)
+    {
+        return (bool)Mage::getStoreConfig(self::XML_PATH_USE_LOW_STOCK, $store);
+    }
+
+    /**
      * Returns exchange rate cron frequency
      *
      * For possible return values
@@ -535,6 +556,27 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     public function getRatingsAndReviewsProvider($store = null)
     {
         return Mage::getStoreConfig(self::XML_PATH_RATING_PROVIDER, $store);
+    }
+
+    /**
+     * Set the ratings and reviews provider
+     *
+     * @param string $provider
+     * @param Mage_Core_Model_Store|null $store the store model or null.
+     */
+    public function setRatingsAndReviewsProvider($provider, $store = null)
+    {
+        if ($store === null) {
+            $store = Mage::app()->getStore();
+        }
+        /** @var Mage_Core_Model_Config $config */
+        $config = Mage::getModel('core/config');
+        $config->saveConfig(
+            self::XML_PATH_RATING_PROVIDER,
+            $provider,
+            'stores',
+            $store->getId()
+        );
     }
 
     /**

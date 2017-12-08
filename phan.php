@@ -25,24 +25,19 @@
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-class Nosto_Tagging_Model_Meta_Product_Tags_LowStock
-{
+ini_set('xdebug.max_nesting_level', 5120);
 
-    /**
-     * Builds a custom tag to denote a low-stock for simple product
-     *
-     * @param Mage_Catalog_Model_Product $product
-     * @return bool
-     */
-    public static function build(Mage_Catalog_Model_Product $product) 
-    {
-        if ($product->getTypeId() === Mage_Catalog_Model_Product_Type::TYPE_SIMPLE) {
-            /** @var Mage_CatalogInventory_Model_Stock_Item $stockItem */
-            $stockItem = Mage::getModel('cataloginventory/stock_item');
-            $stockItem = $stockItem->loadByProduct($product);
-            return $stockItem->verifyNotification();
-        } else {
-            return false;
-        }
-    }
-}
+return [
+    'directory_list' => [
+         'app',
+         '.phan/stubs',
+         'lib',
+         'vendor'
+    ],
+    "exclude_analysis_directory_list" => [
+        '.phan/stubs',
+        'lib',
+        'vendor',
+        'app/code/community/Nosto/Tagging/sql/tagging_setup/'
+    ],
+];

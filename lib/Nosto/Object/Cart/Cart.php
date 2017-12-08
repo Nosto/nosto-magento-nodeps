@@ -39,8 +39,13 @@
 /**
  * Model class containing the information about the particulars of a shopping cart.
  */
-class Nosto_Object_Cart_Cart extends Nosto_AbstractObject
+class Nosto_Object_Cart_Cart extends Nosto_AbstractObject implements Nosto_Types_MarkupableInterface
 {
+    /**
+     * @var string visitor checksum
+     */
+    private $hcid;
+
     /**
      * @var string URL for restoring cart
      */
@@ -102,5 +107,30 @@ class Nosto_Object_Cart_Cart extends Nosto_AbstractObject
     public function setRestoreCartUrl($restoreCartUrl)
     {
         $this->restoreCartUrl = $restoreCartUrl;
+    }
+
+    /**
+     * Get the visitor checksum
+     *
+     * @return string
+     */
+    public function getHcid()
+    {
+        return $this->hcid;
+    }
+
+    /**
+     * Set the visitor checksum
+     *
+     * @param string $hcid
+     */
+    public function setHcid($hcid)
+    {
+        $this->hcid = $hcid;
+    }
+
+    public function getMarkupKey()
+    {
+        return "nosto_cart";
     }
 }

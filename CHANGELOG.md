@@ -1,5 +1,42 @@
 All notable changes to this project will be documented in this file. This project adheres to Semantic Versioning.
 
+### 3.3.4
+* Fix the list price for bundle product was aways same as final price
+
+### 3.3.3
+* Exclude OutOfStock simple products from configurable product price determination
+* Add a link to configuration page
+* Enable rating and review tagging by default
+* Get product attribute type id in runtime instead of hard coded it to 4
+* Fix phan settings and phpcs settings
+
+### 3.3.2
+* Update composer dependencies
+* Update Magento package dependencies
+* Define PHP requirements
+
+### 3.3.1
+* Fix the issue that new product url contains '_ignore_category' when flat catalog is enabled
+
+### 3.3.0
+* Send client’s phone number, postal code and country in order data 
+* Improve error handling and error recovery in Nosto account creation 
+* Verify dependencies (Nosto PHP SDK) before running Nosto
+
+### 3.2.0
+* Add support for group price and catalog price rule using price variation
+* Update rating and reviews to Nosto whenever they are changed or new ones are added
+* Respect tax rules in product tagging
+* Dispatch events after Nosto product, Nosto order or Nosto cart is loaded
+* Fix bug in SKU availability
+
+### 3.1.2
+* Rename RestoreCartController to CartController to avoid issues with case sensitivity
+
+### 3.1.1
+* Rename low stock builder class
+* Add possibility enable / disable low stock tagging
+
 ### 3.1.0
 * Add support for adding SKUs to cart from Nosto recommendations
 * Add low stock indication to product tag1 attribute

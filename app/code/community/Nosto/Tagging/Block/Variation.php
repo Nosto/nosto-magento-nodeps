@@ -44,7 +44,7 @@ class Nosto_Tagging_Block_Variation extends Mage_Core_Block_Template
     {
         /** @var Nosto_Tagging_Helper_Account $helper */
         $helper = Mage::helper('nosto_tagging/account');
-        if (!Mage::helper('nosto_tagging')->isModuleEnabled()
+        if (!Mage::helper('nosto_tagging/module')->isModuleEnabled()
             || !$helper->existsAndIsConnected()
         ) {
             return '';
@@ -56,23 +56,44 @@ class Nosto_Tagging_Block_Variation extends Mage_Core_Block_Template
     /**
      * Return the current variation id
      *
-     * @return string
+     * @return string|null the identifier of the current variation
      */
     public function getVariationId()
     {
-        return Mage::app()->getStore()->getCurrentCurrencyCode();
+        /** @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging');
+        if ($dataHelper->isMultiCurrencyMethodExchangeRate(Mage::app()->getStore())) {
+            return Mage::app()->getStore()->getCurrentCurrencyCode();
+        } elseif ($dataHelper->isVariationEnabled(Mage::app()->getStore())) {
+            $groupId = Mage::getSingleton('customer/session')->getCustomerGroupId();
+
+            /** @var Mage_Customer_Model_Group $customerGroup */
+            $customerGroup = Mage::getModel('customer/group')->load($groupId);
+            if ($customerGroup instanceof Mage_Customer_Model_Group) {
+                /* @var Nosto_Tagging_Helper_Variation $variationHelper  */
+                $variationHelper = Mage::helper('nosto_tagging/variation');
+                return $variationHelper->generateVariationId($customerGroup);
+            }
+        }
+
+        return null;
     }
 
     /**
      * Tells if store uses multiple currencies
      *
-     * @return string
+     * @return bool
      */
-    public function useMultiCurrency()
+    public function useMultiCurrencyOrPriceVariation()
     {
         /** @var Nosto_Tagging_Helper_Data $helper */
         $helper = Mage::helper('nosto_tagging');
 
-        return $helper->isMultiCurrencyMethodExchangeRate(Mage::app()->getStore());
+        $enabled = $helper->isMultiCurrencyMethodExchangeRate(Mage::app()->getStore());
+        if (!$enabled) {
+            $enabled = $helper->isVariationEnabled(Mage::app()->getStore());
+        }
+
+        return $enabled;
     }
 }

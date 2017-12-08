@@ -108,28 +108,28 @@ interface Nosto_Types_Product_ProductInterface
     /**
      * Returns the first set of tags for the product.
      *
-     * @return array first set of the tags
+     * @return array|null first set of the tags
      */
     public function getTag1();
 
     /**
      * Returns the second set of tags for the product.
      *
-     * @return array second set of the tags
+     * @return array|null second set of the tags
      */
     public function getTag2();
 
     /**
      * Returns the third set of tags for the product.
      *
-     * @return array third set of the tags
+     * @return array|null third set of the tags
      */
     public function getTag3();
 
     /**
      * Returns the categories the product is located in.
      *
-     * @return array list of category strings, e.g. array("/shoes/winter", "shoes/boots").
+     * @return array|null list of category strings.
      */
     public function getCategories();
 
@@ -251,7 +251,7 @@ interface Nosto_Types_Product_ProductInterface
     /**
      * Returns the product variations
      *
-     * @return Nosto\Object\Product\SkuCollection
+     * @return \Nosto\Object\Product\SkuCollection
      */
     public function getSkus();
 
@@ -261,4 +261,11 @@ interface Nosto_Types_Product_ProductInterface
      * @return string
      */
     public function getThumbUrl();
+
+    /**
+     * Returns the product variations if any exist.
+     *
+     * @return Nosto_Types_Product_VariationInterface[] the variations.
+     */
+    public function getVariations();
 }

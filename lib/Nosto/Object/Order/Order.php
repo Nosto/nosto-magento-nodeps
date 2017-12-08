@@ -40,8 +40,13 @@
  * Model for OrderConfirm information. This is used when compiling the info about an
  * OrderConfirm that is sent to Nosto.
  */
-class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Types_Order_OrderInterface, Nosto_Types_ValidatableInterface
+class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Types_Order_OrderInterface, Nosto_Types_ValidatableInterface, Nosto_Types_MarkupableInterface
 {
+    /**
+     * @var string visitor checksum
+     */
+    private $hcid;
+
     /**
      * @var string|int the unique OrderConfirm number identifying the OrderConfirm
      */
@@ -167,11 +172,18 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
     /**
      * Sets the date when the OrderConfirm was placed in the format Y-m-d
      *
-     * @param DateTimeInterface $createdAt the created date.
+     * @param DateTimeInterface|\DateTime $createdAt the created date.
+     *
+     * @throws Nosto_NostoException
      */
-    public function setCreatedAt(DateTimeInterface $createdAt)
+    public function setCreatedAt($createdAt)
     {
-        $this->createdAt = $createdAt->format('Y-m-d H:i:s');
+        if ($createdAt instanceof DateTime
+            || (is_object($createdAt) && method_exists($createdAt, 'format'))) {
+            $this->createdAt = $createdAt->format('Y-m-d H:i:s');
+        } else {
+            throw new Nosto_NostoException('Invalid argumanet, expected DateTime or DateTimeInterface');
+        }
     }
 
     /**
@@ -261,8 +273,7 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
     public function getOrderStatuses()
     {
         $formatted = array();
-        if (
-            $this->orderStatuses instanceof Traversable
+        if ($this->orderStatuses instanceof Traversable
             || is_array($this->orderStatuses)
         ) {
             foreach ($this->orderStatuses as $orderStatus) {
@@ -274,5 +285,33 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
         }
 
         return $formatted;
+    }
+
+    /**
+     * Get the visitor checksum
+     *
+     * @return string
+     */
+    public function getHcid()
+    {
+        return $this->hcid;
+    }
+
+    /**
+     * Set the visitor checksum
+     *
+     * @param string $hcid
+     */
+    public function setHcid($hcid)
+    {
+        $this->hcid = $hcid;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMarkupKey()
+    {
+        return 'nosto_purchase_order';
     }
 }

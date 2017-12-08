@@ -105,7 +105,7 @@ interface Nosto_Types_NotificationInterface
      * For return values
      * @see self::TYPE_*
      *
-     * @return int
+     * @return string
      */
     public function getNotificationType();
 

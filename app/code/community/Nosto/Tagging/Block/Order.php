@@ -47,7 +47,10 @@ class Nosto_Tagging_Block_Order extends Mage_Checkout_Block_Success
     {
         /** @var Nosto_Tagging_Helper_Account $helper */
         $helper = Mage::helper('nosto_tagging/account');
-        if (!Mage::helper('nosto_tagging')->isModuleEnabled() || !$helper->existsAndIsConnected()) {
+        if (
+            !Mage::helper('nosto_tagging/module')->isModuleEnabled()
+            || !$helper->existsAndIsConnected()
+        ) {
             return '';
         }
 
@@ -64,7 +67,7 @@ class Nosto_Tagging_Block_Order extends Mage_Checkout_Block_Success
         /** @var Nosto_Tagging_Helper_Account $helper */
         $helper = Mage::helper('core');
         try {
-            if($helper->isModuleEnabled('Vaimo_Klarna')) {
+            if ($helper->isModuleEnabled('Vaimo_Klarna')) {
                 /** @noinspection PhpUndefinedMethodInspection */
                 $checkoutId = Mage::getSingleton('checkout/session')->getKlarnaCheckoutPrevId();
                 /* @var Nosto_Tagging_Model_Meta_Order_Vaimo_Klarna_Checkout $nostoOrder */
@@ -79,7 +82,7 @@ class Nosto_Tagging_Block_Order extends Mage_Checkout_Block_Success
                 $orderId = Mage::getSingleton('checkout/session')->getLastOrderId();
                 /** @var Mage_Sales_Model_Order $order */
                 $order = Mage::getModel('sales/order')->load($orderId);
-                /** @var Nosto_Tagging_Model_Meta_Order $meta */
+                /** @var Nosto_Tagging_Model_Meta_Order $nostoOrder */
                 $nostoOrder = Mage::getModel('nosto_tagging/meta_order');
                 $nostoOrder->loadData($order);
             }

@@ -1,13 +1,13 @@
 {
-    "name": "nosto/nosto-magento-nodeps",
-    "description": "Nosto Magento extension - no dependencies",
-    "license": "OSL v3.0",
-    "type":"magento-module",
-    "require-dev": {
-        "nosto/php-sdk": "3.0.8",
-        "mridang/pearify": "0.2"
-    },
-    "config": {
-        "vendor-dir": "vendor"
-    }
+  "name": "nosto/nosto-magento-nodeps",
+  "description": "Nosto Magento extension - no dependencies",
+  "license": "OSL v3.0",
+  "type":"magento-module",
+  "require-dev": {
+    "nosto/php-sdk": "3.1.1",
+    "mridang/pearify": "0.2"
+  },
+  "config": {
+    "vendor-dir": "vendor"
+  }
 }

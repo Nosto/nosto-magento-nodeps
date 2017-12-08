@@ -90,10 +90,10 @@ class Nosto_Request_Http_Adapter_Curl extends Nosto_Request_Http_Adapter_Adapter
             $curlOptions[CURLOPT_USERAGENT] = $this->userAgent;
         }
         if (!in_array(CURLOPT_TIMEOUT, $curlOptions)) {
-            $curlOptions[CURLOPT_TIMEOUT] = Nosto_Request_Http_HttpRequest::$responseTimeout;
+            $curlOptions[CURLOPT_TIMEOUT] = $this->getResponseTimeout();
         }
         if (!in_array(CURLOPT_CONNECTTIMEOUT, $curlOptions)) {
-            $curlOptions[CURLOPT_CONNECTTIMEOUT] = Nosto_Request_Http_HttpRequest::$connectTimeout;
+            $curlOptions[CURLOPT_CONNECTTIMEOUT] = $this->getConnectTimeout();
         }
         if (empty($curlOptions[CURLOPT_HTTPHEADER]) || !is_array($curlOptions[CURLOPT_HTTPHEADER])) {
             $curlOptions[CURLOPT_HTTPHEADER] = array();

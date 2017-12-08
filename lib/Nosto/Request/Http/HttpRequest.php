@@ -66,14 +66,14 @@ class Nosto_Request_Http_HttpRequest
     public static $userAgent = '';
 
     /**
-     * @var int timeout for waiting response from the api
+     * @var int timeout for waiting response from the api, in second
      */
-    public static $responseTimeout = 5;
+    private $responseTimeout = 5;
 
     /**
-     * @var int timeout for connecting to the api
+     * @var int timeout for connecting to the api, in second
      */
-    public static $connectTimeout = 5;
+    private $connectTimeout = 5;
 
     /**
      * @var string the request url.
@@ -362,7 +362,7 @@ class Nosto_Request_Http_HttpRequest
      */
     public function setPath($path)
     {
-        $this->setUrl(self::getBaseURL() . $path);
+        $this->setUrl(Nosto_Nosto::getBaseURL() . $path);
     }
 
     /**
@@ -373,17 +373,6 @@ class Nosto_Request_Http_HttpRequest
     public function setUrl($url)
     {
         $this->url = $url;
-    }
-
-    /**
-     * Returns the base URL by reading the environment and system variables. This
-     * value can be overridden for testing purposes byt editing the .env file
-     *
-     * @return string the base URL for the endpoint
-     */
-    public static function getBaseURL()
-    {
-        return Nosto_Nosto::getEnvVariable('NOSTO_WEB_HOOK_BASE_URL', Nosto_Nosto::DEFAULT_NOSTO_WEB_HOOK_BASE_URL);
     }
 
     /**
@@ -399,6 +388,9 @@ class Nosto_Request_Http_HttpRequest
         if (!empty($this->replaceParams)) {
             $url = self::buildUri($url, $this->replaceParams);
         }
+        $this->adapter->setResponseTimeout($this->getResponseTimeout());
+        $this->adapter->setConnectTimeout($this->getConnectTimeout());
+        
         return $this->adapter->post(
             $url,
             array(
@@ -433,6 +425,9 @@ class Nosto_Request_Http_HttpRequest
         if (!empty($this->replaceParams)) {
             $url = self::buildUri($url, $this->replaceParams);
         }
+        $this->adapter->setResponseTimeout($this->getResponseTimeout());
+        $this->adapter->setConnectTimeout($this->getConnectTimeout());
+
         return $this->adapter->put(
             $url,
             array(
@@ -456,6 +451,9 @@ class Nosto_Request_Http_HttpRequest
         if (!empty($this->queryParams)) {
             $url .= '?' . http_build_query($this->queryParams);
         }
+        $this->adapter->setResponseTimeout($this->getResponseTimeout());
+        $this->adapter->setConnectTimeout($this->getConnectTimeout());
+
         return $this->adapter->get(
             $url,
             array(
@@ -475,12 +473,51 @@ class Nosto_Request_Http_HttpRequest
         if (!empty($this->replaceParams)) {
             $url = self::buildUri($url, $this->replaceParams);
         }
+        $this->adapter->setResponseTimeout($this->getResponseTimeout());
+        $this->adapter->setConnectTimeout($this->getConnectTimeout());
+
         return $this->adapter->delete(
             $url,
             array(
                 self::HEADERS => $this->headers,
             )
         );
+    }
+
+    /**
+     * Get response timeout in second
+     * @return int response timeout in second
+     */
+    public function getResponseTimeout()
+    {
+        return $this->responseTimeout;
+    }
+
+    /**
+     * Set response timeout in second
+     * @param int $responseTimeout in second
+     */
+    public function setResponseTimeout($responseTimeout)
+    {
+        $this->responseTimeout = $responseTimeout;
+    }
+
+    /**
+     * connect timeout in second
+     * @return int connect timeout in second
+     */
+    public function getConnectTimeout()
+    {
+        return $this->connectTimeout;
+    }
+
+    /**
+     * Set connect timeout in second
+     * @param int $connectTimeout in second
+     */
+    public function setConnectTimeout($connectTimeout)
+    {
+        $this->connectTimeout = $connectTimeout;
     }
 
     /**

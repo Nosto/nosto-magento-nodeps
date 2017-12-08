@@ -7,3 +7,4 @@ vendor
 .phan/
 pearify.json
 phan.php
+.env

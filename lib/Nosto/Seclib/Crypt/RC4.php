@@ -107,7 +107,7 @@ class Nosto_Seclib_Crypt_RC4 extends Nosto_Seclib_Crypt_Base
      * @var string
      * @access private
      */
-    var $key = "\0";
+    var $key;
 
     /**
      * The Key Stream for decryption and encryption
@@ -145,7 +145,23 @@ class Nosto_Seclib_Crypt_RC4 extends Nosto_Seclib_Crypt_Base
     function isValidEngine($engine)
     {
         if ($engine == Nosto_Seclib_Crypt_Base::ENGINE_OPENSSL) {
-            $this->cipher_name_openssl = 'rc4-40';
+            if (version_compare(PHP_VERSION, '5.3.7') >= 0) {
+                $this->cipher_name_openssl = 'rc4-40';
+            } else {
+                switch (strlen($this->key)) {
+                    case 5:
+                        $this->cipher_name_openssl = 'rc4-40';
+                        break;
+                    case 8:
+                        $this->cipher_name_openssl = 'rc4-64';
+                        break;
+                    case 16:
+                        $this->cipher_name_openssl = 'rc4';
+                        break;
+                    default:
+                        return false;
+                }
+            }
         }
 
         return parent::isValidEngine($engine);

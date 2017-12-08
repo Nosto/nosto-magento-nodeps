@@ -46,7 +46,11 @@
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
-class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto_Types_Product_ProductInterface, Nosto_Types_ValidatableInterface
+class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
+    Nosto_Types_Product_ProductInterface,
+    Nosto_Types_ValidatableInterface,
+    Nosto_Types_MarkupableInterface,
+    Nosto_Types_SanitizableInterface
 {
     /**
      * @var string absolute url to the product page.
@@ -89,9 +93,9 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     private $availability;
 
     /**
-     * @var array list of product category strings.
+     * @var Nosto_Object_StringCollection collection of product category strings.
      */
-    private $categories = array();
+    private $categories;
 
     /**
      * @var string the product description.
@@ -109,12 +113,12 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     private $variationId;
 
     /**
-     * @var float the price paid for the supplier
+     * @var float|null the price paid for the supplier
      */
     private $supplierCost;
 
     /**
-     * @var int product stock
+     * @var int|null product stock
      */
     private $inventoryLevel;
 
@@ -129,9 +133,9 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     private $ratingValue;
 
     /**
-     * @var array alternative image urls
+     * @var Nosto_Object_StringCollection collection of alternative image urls
      */
-    private $alternateImageUrls = array();
+    private $alternateImageUrls;
 
     /**
      * @var string the condition of the product
@@ -154,19 +158,19 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     private $gtin;
 
     /**
-     * @var array the first set of tags of the product
+     * @var Nosto_Object_StringCollection the first set of tags of the product
      */
-    private $tag1 = array();
+    private $tag1;
 
     /**
-     * @var array the second set of tags of the product
+     * @var Nosto_Object_StringCollection the second set of tags of the product
      */
-    private $tag2 = array();
+    private $tag2;
 
     /**
-     * @var array the third set of tags of the product
+     * @var Nosto_Object_StringCollection the third set of tags of the product
      */
-    private $tag3 = array();
+    private $tag3;
 
     /**
      * @var string category used in Google's services
@@ -192,20 +196,39 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     private $unitPricingUnit;
 
     /**
-     * SKUs / variations
+     * SKUs
      *
      * @var Nosto_Object_Product_SkuCollection of SKUs
      */
     private $skus;
 
     /**
+     * SKUs
+     *
+     * @var Nosto_Object_Product_VariationCollection of variations
+     */
+    private $variations;
+
+    /**
      * @var string url to the product thumbnail image
      */
     private $thumbUrl;
 
+    /**
+     * An array of custom attributes
+     * @var array
+     */
+    private $customFields = array();
+
     public function __construct()
     {
         $this->skus = new Nosto_Object_Product_SkuCollection();
+        $this->variations = new Nosto_Object_Product_VariationCollection();
+        $this->tag1 = new Nosto_Object_StringCollection('tag1', 'tag');
+        $this->tag2 = new Nosto_Object_StringCollection('tag2', 'tag');
+        $this->tag3 = new Nosto_Object_StringCollection('tag3', 'tag');
+        $this->alternateImageUrls = new Nosto_Object_StringCollection('alternate_image_urls', 'alternate_image_url');
+        $this->categories = new Nosto_Object_StringCollection('categories', 'category');
     }
 
     /**
@@ -256,24 +279,19 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function getTag1()
     {
-        return $this->tag1;
+        return $this->tag1->getData();
     }
 
     /**
      * Sets all the tags to the `tag1` field.
      *
-     * The tags must be an array of non-empty string values.
-     *
-     * Usage:
-     * $object->setTag1(array('customTag1', 'customTag2'));
+     * The tags must be a collection of non-empty string values.
      *
      * @param array $tags the tags.
      */
-    public function setTag1(array $tags)
+    public function setTag1($tags)
     {
-        foreach ($tags as $tag) {
-            $this->addTag1($tag);
-        }
+        $this->tag1->setData($tags);
     }
 
     /**
@@ -288,7 +306,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function addTag1($tag)
     {
-        $this->tag1[] = $tag;
+        $this->tag1->append($tag);
     }
 
     /**
@@ -296,24 +314,19 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function getTag2()
     {
-        return $this->tag2;
+        return $this->tag2->getData();
     }
 
     /**
      * Sets all the tags to the `tag2` field.
      *
-     * The tags must be an array of non-empty string values.
-     *
-     * Usage:
-     * $object->setTag2(array('customTag1', 'customTag2'));
+     * The tags must be a collection of non-empty string values.
      *
      * @param array $tags the tags.
      */
-    public function setTag2(array $tags)
+    public function setTag2($tags)
     {
-        foreach ($tags as $tag) {
-            $this->addTag2($tag);
-        }
+        $this->tag2->setData($tags);
     }
 
     /**
@@ -328,7 +341,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function addTag2($tag)
     {
-        $this->tag2[] = $tag;
+        $this->tag2->append($tag);
     }
 
     /**
@@ -336,24 +349,19 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function getTag3()
     {
-        return $this->tag3;
+        return $this->tag3->getData();
     }
 
     /**
      * Sets all the tags to the `tag3` field.
      *
-     * The tags must be an array of non-empty string values.
-     *
-     * Usage:
-     * $object->setTag3(array('customTag1', 'customTag2'));
+     * The tags must be a collection of non-empty string values.
      *
      * @param array $tags the tags.
      */
-    public function setTag3(array $tags)
+    public function setTag3($tags)
     {
-        foreach ($tags as $tag) {
-            $this->addTag3($tag);
-        }
+        $this->tag3->setData($tags);
     }
 
     /**
@@ -368,7 +376,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function addTag3($tag)
     {
-        $this->tag3[] = $tag;
+        $this->tag3->append($tag);
     }
 
     /**
@@ -512,27 +520,21 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function getCategories()
     {
-        return $this->categories;
+        return $this->categories->getData();
     }
 
     /**
      * Sets the product categories.
      *
-     * The categories must be an array of non-empty string values. The
+     * The categories must be a collection of non-empty string values. The
      * categories are expected to include the entire sub/parent category path,
      * e.g. "clothes/winter/coats".
      *
-     * Usage:
-     * $object->setCategories(array('clothes/winter/coats' [, ... ] ));
-     *
      * @param array $categories the categories.
      */
-    public function setCategories(array $categories)
+    public function setCategories($categories)
     {
-        $this->categories = array();
-        foreach ($categories as $category) {
-            $this->addCategory($category);
-        }
+        $this->categories->setData($categories);
     }
 
     /**
@@ -548,7 +550,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function addCategory($category)
     {
-        $this->categories[] = $category;
+        $this->categories->append($category);
     }
 
     /**
@@ -612,7 +614,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     }
 
     /**
-     * @param float $supplierCost
+     * @param float|null $supplierCost
      */
     public function setSupplierCost($supplierCost)
     {
@@ -628,7 +630,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     }
 
     /**
-     * @param int $inventoryLevel
+     * @param int|null $inventoryLevel
      */
     public function setInventoryLevel($inventoryLevel)
     {
@@ -672,15 +674,21 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function getAlternateImageUrls()
     {
-        return array_values(array_diff($this->alternateImageUrls, array($this->getImageUrl())));
+        $urls = array();
+        foreach ($this->alternateImageUrls as $url) {
+            if ($url !== $this->imageUrl) {
+                $urls[] = $url;
+            }
+        }
+        return $urls;
     }
 
     /**
      * @param array $alternateImageUrls
      */
-    public function setAlternateImageUrls(array $alternateImageUrls)
+    public function setAlternateImageUrls($alternateImageUrls)
     {
-        $this->alternateImageUrls = $alternateImageUrls;
+        $this->alternateImageUrls->setData($alternateImageUrls);
     }
 
     /**
@@ -688,7 +696,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
      */
     public function addAlternateImageUrls($alternateImageUrl)
     {
-        $this->alternateImageUrls[] = $alternateImageUrl;
+        $this->alternateImageUrls->append($alternateImageUrl);
     }
 
     /**
@@ -863,5 +871,85 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements Nosto
     public function setThumbUrl($thumbUrl)
     {
         $this->thumbUrl = $thumbUrl;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getVariations()
+    {
+        return $this->variations;
+    }
+
+    /**
+     * Sets the variations
+     *
+     * @param Nosto_Object_Product_VariationCollection $variations
+     */
+    public function setVariations(Nosto_Object_Product_VariationCollection $variations)
+    {
+        $this->variations = $variations;
+    }
+
+    /**
+     * Sets the variations
+     *
+     * @param Nosto_Types_Product_VariationInterface $variation
+     */
+    public function addVariation(Nosto_Types_Product_VariationInterface $variation)
+    {
+        $this->variations->append($variation);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMarkupKey()
+    {
+        return 'nosto_product';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCustomFields()
+    {
+        return $this->customFields;
+    }
+
+    /**
+     * Setter for custom attributes
+     *
+     * @param array $customFields
+     */
+    public function setCustomFields(array $customFields)
+    {
+        $this->customFields = $customFields;
+    }
+
+    /**
+     * Add a custom attribute
+     *
+     * @param $attribute
+     * @param $value
+     */
+    public function addCustomField($attribute, $value)
+    {
+        if ($this->customFields === null) {
+            $this->customFields = array();
+        }
+        $this->customFields[$attribute] = $value;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function sanitize()
+    {
+        $sanitized = clone $this;
+        $sanitized->setInventoryLevel(null);
+        $sanitized->setSupplierCost(null);
+
+        return $sanitized;
     }
 }

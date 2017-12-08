@@ -54,6 +54,8 @@ class Nosto_Operation_AccountSignup extends Nosto_Operation_AbstractOperation
     public function __construct(Nosto_Types_Signup_SignupInterface $account)
     {
         $this->account = $account;
+        //Account creation takes time
+        $this->setResponseTimeout(60);
     }
 
     /**

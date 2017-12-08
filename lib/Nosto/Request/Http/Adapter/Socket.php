@@ -99,7 +99,7 @@ class Nosto_Request_Http_Adapter_Socket extends Nosto_Request_Http_Adapter_Adapt
             $streamOptions['http']['user_agent'] = $this->userAgent;
         }
         if (!array_key_exists('timeout', $streamOptions['http'])) {
-            $streamOptions['http']['timeout'] = Nosto_Request_Http_HttpRequest::$responseTimeout;
+            $streamOptions['http']['timeout'] = $this->getResponseTimeout();
         }
         $context = stream_context_create($streamOptions);
         // We use file_get_contents() directly here as we need the http response headers which are automatically

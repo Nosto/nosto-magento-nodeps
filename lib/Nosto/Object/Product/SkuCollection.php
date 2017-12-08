@@ -39,7 +39,7 @@
 /**
  * Collection class to store a collection of SKUs
  */
-class Nosto_Object_Product_SkuCollection extends Nosto_Object_AbstractCollection
+class Nosto_Object_Product_SkuCollection extends Nosto_Object_AbstractCollection implements Nosto_Types_MarkupableInterface
 {
     /**
      * Appends item to the collection of skus
@@ -49,5 +49,10 @@ class Nosto_Object_Product_SkuCollection extends Nosto_Object_AbstractCollection
     public function append(Nosto_Types_Product_SkuInterface $sku)
     {
         $this->var[] = $sku;
+    }
+
+    public function getMarkupKey()
+    {
+        return 'skus';
     }
 }
