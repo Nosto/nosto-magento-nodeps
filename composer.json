@@ -1,7 +1,7 @@
 {
   "name": "nosto/nosto-magento-nodeps",
   "description": "Nosto Magento extension - no dependencies",
-  "license": "OSL v3.0",
+  "license": "OSL-3.0",
   "type":"magento-module",
   "require-dev": {
     "nosto/php-sdk": "3.1.1",
