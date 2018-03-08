@@ -376,21 +376,21 @@ class Nosto_Request_Http_HttpRequest
     }
 
     /**
-     * Makes a POST request with the specified content to the configured endpoint
+     * Makes a POST request with the raw data
      *
-     * @param mixed $content the object to be serialized to JSON and sent
+     * @param string $data
      * @return Nosto_Request_Http_HttpResponse the response as returned by the endpoint
      */
-    public function post($content)
+    public function postRaw($data)
     {
-        $this->content = Nosto_Helper_SerializationHelper::serialize($content);
+        $this->content = $data;
         $url = $this->url;
         if (!empty($this->replaceParams)) {
             $url = self::buildUri($url, $this->replaceParams);
         }
         $this->adapter->setResponseTimeout($this->getResponseTimeout());
         $this->adapter->setConnectTimeout($this->getConnectTimeout());
-        
+
         return $this->adapter->post(
             $url,
             array(
@@ -398,6 +398,17 @@ class Nosto_Request_Http_HttpRequest
                 self::CONTENT => $this->content,
             )
         );
+    }
+
+    /**
+     * Makes a POST request with the specified content to the configured endpoint
+     *
+     * @param mixed $content the object to be serialized to JSON and sent
+     * @return Nosto_Request_Http_HttpResponse the response as returned by the endpoint
+     */
+    public function post($content)
+    {
+        return $this->postRaw(Nosto_Helper_SerializationHelper::serialize($content));
     }
 
     /**

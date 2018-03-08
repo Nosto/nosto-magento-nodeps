@@ -45,30 +45,15 @@
  *
  * The second option is a fallback and should be avoided as much as possible.
  */
-class Nosto_Operation_OrderConfirm extends Nosto_Operation_AbstractOperation
+class Nosto_Operation_OrderConfirm extends Nosto_Operation_AbstractAuthenticatedOperation
 {
-    /**
-     * @var Nosto_Types_Signup_AccountInterface the account to perform the operation on.
-     */
-    private $account;
-
-    /**
-     * Constructor.
-     *
-     * @param Nosto_Types_Signup_AccountInterface $account the configuration object.
-     */
-    public function __construct(Nosto_Types_Signup_AccountInterface $account)
-    {
-        $this->account = $account;
-    }
-
     /**
      * Sends the Nosto_Operation_OrderConfirm confirmation to Nosto.
      *
      * @param Nosto_Types_Order_OrderInterface $order the placed Nosto_Operation_OrderConfirm model.
      * @param string|null $customerId the Nosto customer ID of the user who placed the OrderConfirm.
-     * @throws Nosto_NostoException on failure.
      * @return true on success.
+     * @throws Nosto_Request_Http_Exception_AbstractHttpException
      */
     public function send(Nosto_Types_Order_OrderInterface $order, $customerId = null)
     {

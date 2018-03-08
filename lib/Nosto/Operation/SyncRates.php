@@ -39,28 +39,15 @@
 /**
  * Handles updating exchange rates through the Nosto API
  */
-class Nosto_Operation_SyncRates extends Nosto_Operation_AbstractOperation
+class Nosto_Operation_SyncRates extends Nosto_Operation_AbstractAuthenticatedOperation
 {
-    /**
-     * @var Nosto_Types_Signup_AccountInterface the Nosto account to update the rates for.
-     */
-    private $account;
-
-    /**
-     * Constructor.
-     *
-     * @param Nosto_Types_Signup_AccountInterface $account the Nosto configuration object.
-     */
-    public function __construct(Nosto_Types_Signup_AccountInterface $account)
-    {
-        $this->account = $account;
-    }
-
     /**
      * Updates exchange rates to Nosto
      *
      * @param Nosto_Object_ExchangeRateCollection $collection the collection of exchange rates to update
      * @return bool returns true when the operation was a success
+     * @throws Nosto_NostoException
+     * @throws Nosto_Request_Http_Exception_AbstractHttpException
      */
     public function update(Nosto_Object_ExchangeRateCollection $collection)
     {

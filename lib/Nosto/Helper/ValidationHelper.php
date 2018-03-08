@@ -117,12 +117,13 @@ class Nosto_Helper_ValidationHelper extends Nosto_Helper_AbstractHelper
      *
      * @param array $properties the list of property names to validate.
      * @return bool true if all are valid, false otherwise.
+     * @throws Nosto_NostoException
      */
     protected function validateRequired(array $properties)
     {
         $valid = true;
         foreach ($properties as $property) {
-            $value = $this->object->{$property};
+            $value = $this->getPropertyValue($property);
             if (empty($value)) {
                 $this->addError($property, sprintf('Property "%s" must not be empty.', $property));
                 $valid = false;
@@ -151,13 +152,14 @@ class Nosto_Helper_ValidationHelper extends Nosto_Helper_AbstractHelper
      * @param array $properties the list of properties to validate.
      * @param array $values the list of valid values the properties must
      * @return bool true if all are valid, false otherwise.
+     * @throws Nosto_NostoException
      */
     protected function validateIn(array $properties, array $values)
     {
         $valid = true;
         $supported = implode('", "', $values);
         foreach ($properties as $property) {
-            $value = $this->object->{$property};
+            $value = $this->getPropertyValue($property);
             if (!in_array($value, $values)) {
                 $this->addError(
                     $property,
@@ -172,5 +174,27 @@ class Nosto_Helper_ValidationHelper extends Nosto_Helper_AbstractHelper
         }
 
         return $valid;
+    }
+
+    /**
+     * Gets the value of an attribute
+     * Throws an exception if the getter doesn't exist
+     *
+     * @param $property
+     * @return mixed
+     * @throws Nosto_NostoException
+     */
+    protected function getPropertyValue($property)
+    {
+        $getter = sprintf('get%s', $property);
+        if (!method_exists($this->object, $getter)) {
+            throw new Nosto_NostoException(
+                'Class %s does not have getter for property %s',
+                get_class($this->object),
+                $property
+            );
+        }
+
+        return $this->object->$getter();
     }
 }

@@ -47,9 +47,13 @@ class Nosto_Helper_SerializationHelper extends Nosto_Helper_AbstractHelper
     public static function serialize($object)
     {
         $items = array();
-        if ($object instanceof Traversable) {
+        if ($object instanceof Traversable || is_array($object)) {
             foreach ($object as $item) {
-                $items[] = self::toArray($item);
+                if (is_object($item)) {
+                    $items[] = self::toArray($item);
+                } else {
+                    $items[] = $item;
+                }
             }
             return json_encode($items);
         } else {

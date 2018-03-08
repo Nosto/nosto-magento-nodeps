@@ -39,28 +39,15 @@
 /**
  * Operation class for updating common account settings through the Nosto API.
  */
-class Nosto_Operation_UpdateSettings extends Nosto_Operation_AbstractOperation
+class Nosto_Operation_UpdateSettings extends Nosto_Operation_AbstractAuthenticatedOperation
 {
-    /**
-     * @var Nosto_Types_Signup_AccountInterface Nosto configuration
-     */
-    private $account;
-
-    /**
-     * Constructor.
-     *
-     * @param Nosto_Types_Signup_AccountInterface $account the Nosto configuration object.
-     */
-    public function __construct(Nosto_Types_Signup_AccountInterface $account)
-    {
-        $this->account = $account;
-    }
-
     /**
      * Sends a POST request to create a new account for a store in Nosto
      *
      * @param Nosto_Types_SettingsInterface $settings
      * @return bool if the request was successful.
+     * @throws Nosto_NostoException
+     * @throws Nosto_Request_Http_Exception_AbstractHttpException
      */
     public function update(Nosto_Types_SettingsInterface $settings)
     {

@@ -1,5 +1,46 @@
 All notable changes to this project will be documented in this file. This project adheres to Semantic Versioning.
 
+### 3.5.5
+* Fix the bundle product list price was incorrect if there is any optional item
+
+### 3.5.4
+* Invalidate Nosto index if settings affecting the product data has been changed
+* Revise some instructional texts
+
+### 3.5.3
+* Fix the issue that add to cart popup shows child product added to cart when adding a bundle product to cart
+
+### 3.5.2
+* Improve add to cart popup trigger
+
+### 3.5.1
+* Remove deleted products from Nosto index
+* Use discontinue endpoint for removing (discontinuing)products in Nosto 
+* Enable custom field tagging by default
+
+### 3.5.0
+* Introduce custom indexer for Nosto product data
+* Update Nosto product data after catalog price rules are saved and applied
+* Add user defined attributes as custom fields to Nosto product
+* Add boolean return for data loaders
+* Use fixed price for bundled product if defined
+
+### 3.4.0 (skipped)
+
+### 3.3.7
+* Add validation for Nosto product before product tagging, sending product over the API and before exporting
+
+### 3.3.6
+* Fix currency conversion issue in cart tagging
+* Add SKU id in cart tagging and order tagging
+* Apply catalog price rules also for product API updates
+* Change the sorting order of Nosto settings in store admin
+
+### 3.3.5
+* Handle orders when Vaimo KCO module is enabled but not used for order
+* Fix issues with code style checks
+* Add support Magento compilation mode
+
 ### 3.3.4
 * Fix the list price for bundle product was aways same as final price
 

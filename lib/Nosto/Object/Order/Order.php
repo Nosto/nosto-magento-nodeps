@@ -172,7 +172,7 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
     /**
      * Sets the date when the OrderConfirm was placed in the format Y-m-d
      *
-     * @param DateTimeInterface|\DateTime $createdAt the created date.
+     * @param \DateTimeInterface|\DateTime $createdAt the created date.
      *
      * @throws Nosto_NostoException
      */

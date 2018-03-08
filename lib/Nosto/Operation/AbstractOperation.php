@@ -62,7 +62,7 @@ abstract class Nosto_Operation_AbstractOperation
      * @param $request Nosto_Request_Http_HttpRequest the HTTP request
      * @param $response Nosto_Request_Http_HttpResponse the HTTP response to check
      * @return bool returns true when everything was okay
-     * @throws HttpException when the endpoint responds with non-200 status code
+     * @throws \Nosto\Request\Http\Exception\AbstractHttpException
      */
     protected static function checkResponse(Nosto_Request_Http_HttpRequest $request, Nosto_Request_Http_HttpResponse $response)
     {

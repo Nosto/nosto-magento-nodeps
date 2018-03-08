@@ -45,6 +45,10 @@ class Nosto_Seclib_Crypt_Random
      */
     static function string($length)
     {
+        if (!$length) {
+            return '';
+        }
+
         if (version_compare(PHP_VERSION, '7.0.0', '>=')) {
             try {
                 return \random_bytes($length);

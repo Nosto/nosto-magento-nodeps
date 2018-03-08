@@ -42,13 +42,8 @@
  * it does, while a product delete also results in an upsert but flags the
  * product's availability as 'Discontinued'
  */
-class Nosto_Operation_UpsertProduct extends Nosto_Operation_AbstractOperation
+class Nosto_Operation_UpsertProduct extends Nosto_Operation_AbstractAuthenticatedOperation
 {
-    /**
-     * @var Nosto_Types_Signup_AccountInterface the account to perform the operation on.
-     */
-    private $account;
-
     /**
      * @var Nosto_Object_Product_ProductCollection collection object of products to perform the operation on.
      */
@@ -61,7 +56,7 @@ class Nosto_Operation_UpsertProduct extends Nosto_Operation_AbstractOperation
      */
     public function __construct(Nosto_Types_Signup_AccountInterface $account)
     {
-        $this->account = $account;
+        parent::__construct($account);
         $this->collection = new Nosto_Object_Product_ProductCollection();
     }
 
@@ -80,6 +75,7 @@ class Nosto_Operation_UpsertProduct extends Nosto_Operation_AbstractOperation
      *
      * @return bool if the request was successful.
      * @throws Nosto_NostoException on failure.
+     * @throws Nosto_Request_Http_Exception_AbstractHttpException
      */
     public function upsert()
     {

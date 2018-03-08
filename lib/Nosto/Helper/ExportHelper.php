@@ -44,7 +44,7 @@ class Nosto_Helper_ExportHelper extends Nosto_Helper_AbstractExportHelper
     /**
      * @inheritdoc
      */
-    public static function encrypt($secret, $data)
+    public function encrypt($secret, $data)
     {
         $iv = Nosto_Seclib_Crypt_Random::string(16);
         $cipher = new Nosto_Seclib_Crypt_AES(Nosto_Seclib_Crypt_Base::MODE_CBC);

@@ -42,6 +42,7 @@ abstract class Nosto_Tagging_Model_Meta_Cart_Item extends Nosto_Object_Cart_Line
      *
      * @param Mage_Sales_Model_Quote_Item $item
      * @param string $currencyCode
+     * @return bool
      */
     public function loadData(Mage_Sales_Model_Quote_Item $item, $currencyCode)
     {
@@ -49,17 +50,23 @@ abstract class Nosto_Tagging_Model_Meta_Cart_Item extends Nosto_Object_Cart_Line
         parent::setQuantity($item->getQty());
         parent::setName($this->buildItemName($item));
         parent::setPriceCurrencyCode($currencyCode);
-
+        parent::setSkuId($this->buildSkuId($item));
         $store = Mage::app()->getStore();
         /** @var Mage_Tax_Helper_Data $helper */
         $taxHelper = Mage::helper('tax');
         $inclTax = $taxHelper->displayCartPriceInclTax($store);
 
         if ($inclTax) {
-            parent::setPrice($item->getPriceInclTax());
-        } else {
-            parent::setPrice((double) $item->getPrice());
+            $unitPrice = $item->getPriceInclTax();
+        } elseif ($item->getConvertedPrice()) {
+            $unitPrice = $item->getConvertedPrice();
+        } else { // Fallback to whatever is the default price
+            $unitPrice = $item->getPrice();
         }
+
+        parent::setPrice($unitPrice);
+
+        return true;
     }
 
     /**
@@ -84,6 +91,9 @@ abstract class Nosto_Tagging_Model_Meta_Cart_Item extends Nosto_Object_Cart_Line
     protected function buildItemProductId(Mage_Sales_Model_Quote_Item $item)
     {
         $parentItem = $item->getOptionByCode('product_type');
+        if ($parentItem === null) {
+            $parentItem = $item->getParentItem();
+        }
         if ($parentItem !== null) {
             return (string) $parentItem->getProductId();
         } elseif ($item->getProductType() === Mage_Catalog_Model_Product_Type::TYPE_SIMPLE) {
@@ -99,5 +109,24 @@ abstract class Nosto_Tagging_Model_Meta_Cart_Item extends Nosto_Object_Cart_Line
             }
         }
         return (string) $item->getProductId();
+    }
+
+    /**
+     * Resolves the item id / variation id
+     *
+     * @param Mage_Sales_Model_Quote_Item $item
+     *
+     * @return string|null
+     */
+    protected function buildSkuId(Mage_Sales_Model_Quote_Item $item)
+    {
+        $skus = $item->getChildren();
+        /* @var Mage_Sales_Model_Quote_Item $sku */
+        if (isset($skus[0]) && $skus[0] instanceof Mage_Sales_Model_Quote_Item) {
+
+            return $skus[0]->getProductId();
+        }
+
+        return null;
     }
 }

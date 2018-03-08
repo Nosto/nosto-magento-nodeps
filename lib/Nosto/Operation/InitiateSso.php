@@ -41,29 +41,16 @@
  * The operation results in a single-use URL that can be used for logging in
  * to the Nosto_Nosto administration interface.
  */
-class Nosto_Operation_InitiateSso extends Nosto_Operation_AbstractOperation
+class Nosto_Operation_InitiateSso extends Nosto_Operation_AbstractAuthenticatedOperation
 {
-    /**
-     * @var Nosto_Types_Signup_AccountInterface Nosto_Nosto configuration
-     */
-    private $account;
-
-    /**
-     * Constructor.
-     *
-     * @param Nosto_Types_Signup_AccountInterface $account the Nosto_Nosto configuration object.
-     */
-    public function __construct(Nosto_Types_Signup_AccountInterface $account)
-    {
-        $this->account = $account;
-    }
-
     /**
      * Sends a POST request to get a single sign-on URL for a store
      *
      * @param Nosto_Types_UserInterface $user
      * @param $platform
      * @return string the sso URL if the request was successful.
+     * @throws Nosto_NostoException
+     * @throws Nosto_Request_Http_Exception_AbstractHttpException
      */
     public function get(Nosto_Types_UserInterface $user, $platform)
     {

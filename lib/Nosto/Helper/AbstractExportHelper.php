@@ -41,7 +41,7 @@
  * information is used to bootstrap recommendations and decreases the time needed to
  * get accurate recommendations showing in the shop without the learning period.
  */
-abstract class Nosto_Helper_AbstractExportHelper extends Nosto_Helper_AbstractHelper
+abstract class Nosto_Helper_AbstractExportHelper
 {
     /**
      * Serializes the collection to JSON and uses the SSO token (as it is pre-shared
@@ -52,7 +52,7 @@ abstract class Nosto_Helper_AbstractExportHelper extends Nosto_Helper_AbstractHe
      * @param mixed $collection the data collection to export
      * @return string the AES encrypted data.
      */
-    public static function export(Nosto_Types_Signup_AccountInterface $account, $collection)
+    public function export(Nosto_Types_Signup_AccountInterface $account, $collection)
     {
         $data = '';
         // Use the first 16 chars of the SSO token as secret for encryption.
@@ -61,7 +61,7 @@ abstract class Nosto_Helper_AbstractExportHelper extends Nosto_Helper_AbstractHe
             $tokenValue = $token->getValue();
             $secret = substr($tokenValue, 0, 16);
             if (!empty($secret)) {
-                $data = static::encrypt($secret, $collection);
+                $data = $this->encrypt($secret, $collection);
             }
         }
 
@@ -75,5 +75,5 @@ abstract class Nosto_Helper_AbstractExportHelper extends Nosto_Helper_AbstractHe
      * @param $data
      * @return string
      */
-    abstract public static function encrypt($secret, $data);
+    abstract public function encrypt($secret, $data);
 }

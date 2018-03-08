@@ -224,9 +224,9 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
     {
         $this->skus = new Nosto_Object_Product_SkuCollection();
         $this->variations = new Nosto_Object_Product_VariationCollection();
-        $this->tag1 = new Nosto_Object_StringCollection('tag1', 'tag');
-        $this->tag2 = new Nosto_Object_StringCollection('tag2', 'tag');
-        $this->tag3 = new Nosto_Object_StringCollection('tag3', 'tag');
+        $this->tag1 = new Nosto_Object_StringCollection('tags1', 'tag');
+        $this->tag2 = new Nosto_Object_StringCollection('tags2', 'tag');
+        $this->tag3 = new Nosto_Object_StringCollection('tags3', 'tag');
         $this->alternateImageUrls = new Nosto_Object_StringCollection('alternate_image_urls', 'alternate_image_url');
         $this->categories = new Nosto_Object_StringCollection('categories', 'category');
     }
@@ -236,7 +236,9 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
      */
     public function validationRules()
     {
-        return array();
+        return array(
+            array(array('productId'), 'required')
+        );
     }
 
     /**
@@ -951,5 +953,20 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
         $sanitized->setSupplierCost(null);
 
         return $sanitized;
+    }
+
+    /**
+     * Validates the that product can be used by Nosto
+     *
+     * @return bool
+     */
+    public function isValid()
+    {
+        $validator = new Nosto_Helper_ValidationHelper($this);
+        try {
+            return $validator->validate();
+        } catch (Nosto_NostoException $e) {
+            return false;
+        }
     }
 }

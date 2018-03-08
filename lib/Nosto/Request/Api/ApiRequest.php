@@ -51,6 +51,7 @@ class Nosto_Request_Api_ApiRequest extends Nosto_Request_Http_HttpRequest
     const PATH_PRODUCTS_DISCONTINUE = '/v1/products/discontinue';
     const PATH_CURRENCY_EXCHANGE_RATE = '/exchangerates';
     const PATH_SETTINGS = '/settings';
+    const PATH_CART_UPDATE = '/v1/cart/update';
 
     /**
      * Setter for the end point path, e.g. one of the PATH_ constants.

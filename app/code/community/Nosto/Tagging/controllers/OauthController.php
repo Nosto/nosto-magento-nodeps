@@ -25,7 +25,9 @@
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-require_once __DIR__ . '/../bootstrap.php'; // @codingStandardsIgnoreLine
+/* @var Nosto_Tagging_Helper_Bootstrap $nostoBootstrapHelper */
+$nostoBootstrapHelper = Mage::helper('nosto_tagging/bootstrap');
+$nostoBootstrapHelper->init();
 
 /**
  * OAuth2 controller.
@@ -113,7 +115,7 @@ class Nosto_tagging_OauthController extends Mage_Core_Controller_Front_Action
      * the current store view (as defined by the parameter.)
      *
      * @param Nosto_Types_Signup_AccountInterface $account the account to save
-     * @return boolean a boolean value indicating whether the account was saved
+     * @return bool a boolean value indicating whether the account was saved
      */
     public function save(Nosto_Types_Signup_AccountInterface $account)
     {
