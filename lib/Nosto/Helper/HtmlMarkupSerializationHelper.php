@@ -62,12 +62,7 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
     {
         $spacesStr = str_repeat(' ', $spaces);
         $markup = $spacesStr . self::DIV_START_NOTRANSLATE;
-        $markup .= self::toHtml(
-            $object, Nosto_Helper_SerializationHelper::toSnakeCase($key),
-            $spaces + $indent,
-            $indent,
-            self::STYLE_DISPLAY_NONE
-        );
+        $markup .= self::toHtml($object, $key, $spaces + $indent, $indent, self::STYLE_DISPLAY_NONE);
         $markup .= $spacesStr . self::DIV_END;
         return $markup;
     }
@@ -95,7 +90,7 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
         $spacesStr = str_repeat(' ', $spaces);
 
         if ($object instanceof Nosto_Types_MarkupableInterface) {
-            $key = Nosto_Helper_SerializationHelper::toSnakeCase($object->getMarkupKey());
+            $key = $object->getMarkupKey();
         }
 
         //begin block
@@ -103,7 +98,7 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
         if ($style) {
             $styleStatement = sprintf(' style="%s"', $style);
         }
-        $classStatement = sprintf(' class="%s"', $key);
+        $classStatement = sprintf(' class="%s"', Nosto_Helper_SerializationHelper::toSnakeCase($key));
         $markup = $spacesStr
             . '<span'
             . $classStatement
@@ -119,12 +114,10 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
             $traversable = null;
             if (is_array($object) || $object instanceof Traversable) {
                 $traversable = $object;
-                // Do not convert associative array keys to snake case. It is used for the custom fields
-                $markup .= self::arrayToHtml($object, $key, $spaces, $indent, $traversable, false);
             } elseif (is_object($object)) {
                 $traversable = Nosto_Helper_SerializationHelper::getProperties($object);
-                $markup .= self::arrayToHtml($object, $key, $spaces, $indent, $traversable, true);
             }
+            $markup .= self::arrayToHtml($object, $key, $spaces, $indent, $traversable);
             //end block
             $markup .= $spacesStr . self::SPAN_END . PHP_EOL;
         }
@@ -138,10 +131,9 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
      * @param int $spaces
      * @param int $indent
      * @param array|Traversable $traversable the array
-     * @param bool $snakeCaseKey convert the key to snake cases
      * @return string
      */
-    private static function arrayToHtml($object, $key, $spaces, $indent, $traversable, $snakeCaseKey)
+    private static function arrayToHtml($object, $key, $spaces, $indent, $traversable)
     {
         $markup = '';
 
@@ -155,10 +147,6 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
                 } else {
                     $childMarkupKey = $key;
                 }
-            }
-
-            if ($snakeCaseKey) {
-                $childMarkupKey = Nosto_Helper_SerializationHelper::toSnakeCase($childMarkupKey);
             }
 
             if ($childValue !== null) {

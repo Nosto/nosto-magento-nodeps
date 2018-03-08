@@ -176,7 +176,7 @@ class Nosto_Seclib_Net_SFTP_Stream
 
         if ($host[0] == '$') {
             $host = substr($host, 1);
-            global ${$host};
+            global $$host;
             if (($$host instanceof Nosto_Seclib_Net_SFTP) === false) {
                 return false;
             }

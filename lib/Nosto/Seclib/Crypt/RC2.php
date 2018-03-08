@@ -296,7 +296,7 @@ class Nosto_Seclib_Crypt_RC2 extends Nosto_Seclib_Crypt_Base
     function setKeyLength($length)
     {
         if ($length < 8) {
-            $this->default_key_length = 1;
+            $this->default_key_length = 8;
         } elseif ($length > 1024) {
             $this->default_key_length = 128;
         } else {

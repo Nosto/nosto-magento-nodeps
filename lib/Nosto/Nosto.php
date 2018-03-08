@@ -56,10 +56,6 @@ class Nosto_Nosto
     const DEFAULT_NOSTO_API_BASE_URL = 'https://api.nosto.com';
     const DEFAULT_NOSTO_IFRAME_ORIGIN_REGEXP = '(https:\/\/(.*)\.hub\.nosto\.com)|(https:\/\/my\.nosto\.com)'; //codingStandardsIgnoreLine
 
-    const URL_PARAM_MESSAGE_TYPE = 'message_type';
-    const URL_PARAM_MESSAGE_CODE = 'message_code';
-    const URL_PARAM_MESSAGE_TEXT = 'message_text';
-
     /**
      * Return environment variable.
      *
@@ -112,15 +108,12 @@ class Nosto_Nosto
         $message = '';
         $jsonResponse = $response->getJsonResult();
 
-        $errors = self::parseErrorsFromResponse($response);
-        if (isset($jsonResponse->type)
+        if (
+            isset($jsonResponse->type)
             && isset($jsonResponse->message)
         ) {
             if (isset($jsonResponse->message)) {
-                $message .= $jsonResponse->message;
-            }
-            if (!empty($errors)) {
-                $message .= ' | ' . $errors;
+                $message .= '. ' . $jsonResponse->message;
             }
             throw new Nosto_Request_Api_Exception_ApiResponseException(
                 $message,
@@ -131,10 +124,7 @@ class Nosto_Nosto
             );
         } else {
             if ($response->getMessage()) {
-                $message .= $response->getMessage();
-            }
-            if (!empty($errors)) {
-                $message .= ' | ' . $errors;
+                $message .= '. ' . $response->getMessage();
             }
             throw new Nosto_Request_Http_Exception_HttpResponseException(
                 $message,
@@ -144,31 +134,5 @@ class Nosto_Nosto
                 $response
             );
         }
-    }
-
-    /**
-     * Parses errors from Nosto_Request_Http_HttpResponse
-     * @param Nosto_Request_Http_HttpResponse $response
-     * @return string
-     */
-    public static function parseErrorsFromResponse(Nosto_Request_Http_HttpResponse $response)
-    {
-        $json = $response->getJsonResult();
-        $errorStr = '';
-        if (isset($json->errors)
-            && is_array($json->errors)
-            && !empty($json->errors)
-        ) {
-            foreach ($json->errors as $stdClassError) {
-                if (isset($stdClassError->errors)) {
-                    $errorStr .= $stdClassError->errors;
-                }
-                if (isset($stdClassError->product_id)) {
-                    $errorStr .= sprintf('(product #%s)', $stdClassError->product_id);
-                }
-            }
-        }
-
-        return $errorStr;
     }
 }
