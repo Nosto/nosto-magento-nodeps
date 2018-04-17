@@ -73,9 +73,14 @@ abstract class Nosto_Object_AbstractPerson extends Nosto_AbstractObject implemen
      */
     private $country;
 
+    /**
+     * @var boolean the opt-in status for the person
+     */
+    private $marketingPermission;
+
     public function __construct()
     {
-        // Dummy
+        $this->setMarketingPermission(false);
     }
 
     /**
@@ -184,5 +189,30 @@ abstract class Nosto_Object_AbstractPerson extends Nosto_AbstractObject implemen
     public function setCountry($country)
     {
         $this->country = $country;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getMarketingPermission()
+    {
+        return $this->marketingPermission;
+    }
+
+    /**
+     * @param bool $marketingPermission
+     */
+    public function setMarketingPermission($marketingPermission)
+    {
+        $this->marketingPermission = (bool)$marketingPermission;
+    }
+
+    /**
+     * @param bool $optedIn
+     * @deprecated will be removed in near future, use setMarketingPermission instead
+     */
+    public function setOptedIn($optedIn)
+    {
+        $this->setMarketingPermission($optedIn);
     }
 }

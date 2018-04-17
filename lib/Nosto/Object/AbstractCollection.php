@@ -95,4 +95,14 @@ abstract class Nosto_Object_AbstractCollection implements Iterator, Countable
         $var = ($key !== null && $key !== false);
         return $var;
     }
+
+    /**
+     * Serialize to json
+     *
+     * @return string json
+     */
+    public function toJson()
+    {
+        return Nosto_Helper_SerializationHelper::serialize($this);
+    }
 }

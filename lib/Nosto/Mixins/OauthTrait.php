@@ -54,8 +54,8 @@ trait Nosto_Mixins_OauthTrait
                 if (self::save($account)) {
                     self::redirect(
                         array(
-                            'message_type' => Nosto_Nosto::TYPE_SUCCESS,
-                            'message_code' => Nosto_Nosto::CODE_ACCOUNT_CONNECT
+                            Nosto_Nosto::URL_PARAM_MESSAGE_TYPE => Nosto_Nosto::TYPE_SUCCESS,
+                            Nosto_Nosto::URL_PARAM_MESSAGE_CODE => Nosto_Nosto::CODE_ACCOUNT_CONNECT
                         )
                     );
                     return;
@@ -66,9 +66,9 @@ trait Nosto_Mixins_OauthTrait
                 self::logError($e);
                 self::redirect(
                     array(
-                        'message_type' => Nosto_Nosto::TYPE_ERROR,
-                        'message_code' => Nosto_Nosto::CODE_ACCOUNT_CONNECT,
-                        'message_text' => $e->getMessage()
+                        Nosto_Nosto::URL_PARAM_MESSAGE_TYPE => Nosto_Nosto::TYPE_ERROR,
+                        Nosto_Nosto::URL_PARAM_MESSAGE_CODE => Nosto_Nosto::CODE_ACCOUNT_CONNECT,
+                        Nosto_Nosto::URL_PARAM_MESSAGE_TEXT => $e->getMessage()
                     )
                 );
                 return;
@@ -84,9 +84,9 @@ trait Nosto_Mixins_OauthTrait
             self::logError(new Exception($logMsg));
             self::redirect(
                 array(
-                    'message_type' => Nosto_Nosto::TYPE_ERROR,
-                    'message_code' => Nosto_Nosto::CODE_ACCOUNT_CONNECT,
-                    'message_text' => $desc
+                    Nosto_Nosto::URL_PARAM_MESSAGE_TYPE => Nosto_Nosto::TYPE_ERROR,
+                    Nosto_Nosto::URL_PARAM_MESSAGE_CODE => Nosto_Nosto::CODE_ACCOUNT_CONNECT,
+                    Nosto_Nosto::URL_PARAM_MESSAGE_TEXT => $desc
                 )
             );
         } else {
