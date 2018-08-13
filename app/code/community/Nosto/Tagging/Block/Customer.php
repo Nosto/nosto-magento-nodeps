@@ -48,15 +48,14 @@ class Nosto_Tagging_Block_Customer extends Mage_Customer_Block_Account_Dashboard
         /** @var Nosto_Tagging_Helper_Account $helper */
         $helper = Mage::helper('nosto_tagging/account');
         /** @noinspection PhpUndefinedMethodInspection */
-        if (
-            !Mage::helper('nosto_tagging/module')->isModuleEnabled()
-            || !$helper->existsAndIsConnected()
+        if (!$helper->existsAndIsConnected()
+            || $this->getNostoCustomer() === null
+            ||!Mage::helper('nosto_tagging/module')->isModuleEnabled()
             || !$this->helper('customer')->isLoggedIn()
         ) {
             return '';
         }
-
-        return parent::_toHtml();
+        return $this->getNostoCustomer()->toHtml();
     }
 
     /*
@@ -80,22 +79,32 @@ class Nosto_Tagging_Block_Customer extends Mage_Customer_Block_Account_Dashboard
      */
     public function getNostoCustomer()
     {
+        /* @var Nosto_Tagging_Helper_Data $helper */
         $helper = Mage::helper('nosto_tagging');
         $store = Mage::app()->getStore();
-        /* @var Nosto_Tagging_Helper_Data $helper */
-        if (!$helper->getSendCustomerData($store)) {
+        $customer = $this->getCustomer();
+        /** @noinspection PhpUndefinedMethodInspection */
+        if (!$customer instanceof Mage_Customer_Model_Customer
+            || $customer->getEmail() === null
+            || !$helper->getSendCustomerData($store)
+        ) {
             return null;
         }
-        $customer = $this->getCustomer();
-        $email = $customer->getEmail();
         /** @var Nosto_Tagging_Helper_Email $emailHelper */
         $emailHelper = Mage::helper('nosto_tagging/email');
+        /** @noinspection PhpUndefinedMethodInspection */
+        $email = $customer->getEmail();
         $nostoCustomer = new Nosto_Object_Customer();
+        /** @noinspection PhpUndefinedMethodInspection */
         $nostoCustomer->setFirstName($customer->getFirstname());
+        /** @noinspection PhpUndefinedMethodInspection */
         $nostoCustomer->setLastName($customer->getLastname());
         $nostoCustomer->setCustomerReference($this->getCustomerReference());
         $nostoCustomer->setEmail($email);
         $nostoCustomer->setMarketingPermission($emailHelper->isOptedIn($email));
+        $dataHelper = Mage::helper('nosto_tagging/data');
+        /* @var Nosto_Tagging_Helper_Data $dataHelper */
+        $nostoCustomer->setHcid($dataHelper->getVisitorChecksum());
 
         return $nostoCustomer;
     }

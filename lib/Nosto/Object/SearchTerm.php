@@ -36,48 +36,17 @@
 
 
 
-class Nosto_Object_MarkupableString extends Nosto_AbstractObject implements Nosto_Types_MarkupableInterface
+/**
+ * Nosto_Object_SearchTerm object for tagging
+ */
+class Nosto_Object_SearchTerm extends Nosto_Object_MarkupableString
 {
-    /** @var string the markup key in the html */
-    protected $markupKey;
-
-    /** @var string the value */
-    protected $value;
-
     /**
-     * Nosto_Object_MarkupableString constructor.
-     *
-     * @param string $value
-     * @param string $markupKey
+     * Nosto_Object_SearchTerm constructor.
+     * @param $value
      */
-    public function __construct($value, $markupKey)
+    public function __construct($value)
     {
-        $this->value = $value;
-        $this->markupKey = $markupKey;
-    }
-
-    /**
-     * @return string the value
-     */
-    public function getValue()
-    {
-        return $this->value;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMarkupKey()
-    {
-        return $this->markupKey;
-    }
-
-    public function __toString()
-    {
-        if ($this->value === null) {
-            return '';
-        }
-
-        return $this->value;
+        parent::__construct($value, 'nosto_search_term');
     }
 }

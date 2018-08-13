@@ -45,7 +45,9 @@ class Nosto_Request_Api_Token extends Nosto_AbstractObject implements Nosto_Type
     const API_PRODUCTS = 'products';
     const API_EXCHANGE_RATES = 'rates';
     const API_SETTINGS = 'settings';
+    const API_EMAIL = 'email';
     const API_CREATE = 'create'; // Special token related to the platform
+
     /**
      * @var array list of valid api tokens to request from Nosto.
      */
@@ -53,7 +55,8 @@ class Nosto_Request_Api_Token extends Nosto_AbstractObject implements Nosto_Type
         self::API_SSO,
         self::API_PRODUCTS,
         self::API_EXCHANGE_RATES,
-        self::API_SETTINGS
+        self::API_SETTINGS,
+        self::API_EMAIL
     );
     /**
      * @var string the token name, must be one of the defined tokens from self::$tokenNames.
@@ -70,6 +73,7 @@ class Nosto_Request_Api_Token extends Nosto_AbstractObject implements Nosto_Type
      *
      * @param string $name the token name (must be one of self::$tokenNames).
      * @param string $value the token value string.
+     * @throws Nosto_NostoException
      */
     public function __construct($name, $value)
     {

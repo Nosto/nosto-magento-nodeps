@@ -103,6 +103,7 @@ class Nosto_Object_Signup_Signup extends Nosto_Object_Settings implements Nosto_
         $this->addApiToken(Nosto_Request_Api_Token::API_SSO);
         $this->addApiToken(Nosto_Request_Api_Token::API_EXCHANGE_RATES);
         $this->addApiToken(Nosto_Request_Api_Token::API_SETTINGS);
+        $this->addApiToken(Nosto_Request_Api_Token::API_EMAIL);
     }
 
     /**

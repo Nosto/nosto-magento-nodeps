@@ -4,7 +4,7 @@
   "license": "OSL-3.0",
   "type":"magento-module",
   "require-dev": {
-    "nosto/php-sdk": "3.3.1",
+    "nosto/php-sdk": "3.4.1",
     "mridang/pearify": "0.2"
   },
   "config": {
