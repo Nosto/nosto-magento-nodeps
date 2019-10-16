@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -41,6 +41,7 @@ $installer->getConnection()->delete(
     '`path` LIKE "nosto_tagging/%"'
 );
 
+/** @noinspection PhpUnhandledExceptionInspection */
 $table = $installer
     ->getConnection()
     ->newTable($installer->getTable('nosto_tagging/customer'))
@@ -82,6 +83,7 @@ $table = $installer
             'type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE
         )
     );
+/** @noinspection PhpUnhandledExceptionInspection */
 $installer->getConnection()->createTable($table);
 
 $installer->endSetup();

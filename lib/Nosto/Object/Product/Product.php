@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -50,8 +50,19 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
     Nosto_Types_Product_ProductInterface,
     Nosto_Types_ValidatableInterface,
     Nosto_Types_MarkupableInterface,
-    Nosto_Types_SanitizableInterface
+    Nosto_Types_SanitizableInterface,
+    Nosto_Types_HtmlEncodableInterface
 {
+
+    use Nosto_Mixins_HtmlEncoderTrait;
+
+    /**
+     * Nosto_Object_Product_Product tag options
+     */
+    const TAG1 = 'tag1';
+    const TAG2 = 'tag2';
+    const TAG3 = 'tag3';
+
     /**
      * @var string absolute url to the product page.
      */
@@ -219,6 +230,12 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
      * @var array
      */
     private $customFields = array();
+
+    /**
+     * Nosto_Object_Product_Product publication date in shop
+     * @var string
+     */
+    private $datePublished;
 
     public function __construct()
     {
@@ -456,6 +473,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
     public function setImageUrl($imageUrl)
     {
         $this->imageUrl = $imageUrl;
+        $this->altImagesToUnique();
     }
 
     /**
@@ -592,6 +610,30 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
     }
 
     /**
+     * @inheritDoc
+     */
+    public function getDatePublished()
+    {
+        return $this->datePublished;
+    }
+
+    /**
+     * Sets the product publication date in the shop
+     * in the Y-m-d format.
+     *
+     * @param $datePublished
+     * @throws Nosto_NostoException
+     */
+    public function setDatePublished($datePublished)
+    {
+        try {
+            $this->datePublished = Nosto_Helper_DateHelper::format($datePublished);
+        } catch (Exception $e) {
+            throw new Nosto_NostoException($e->getMessage());
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     public function getVariationId()
@@ -676,13 +718,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
      */
     public function getAlternateImageUrls()
     {
-        $urls = array();
-        foreach ($this->alternateImageUrls as $url) {
-            if ($url !== $this->imageUrl) {
-                $urls[] = $url;
-            }
-        }
-        return $urls;
+        return $this->alternateImageUrls->getData();
     }
 
     /**
@@ -691,6 +727,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
     public function setAlternateImageUrls($alternateImageUrls)
     {
         $this->alternateImageUrls->setData($alternateImageUrls);
+        $this->altImagesToUnique();
     }
 
     /**
@@ -699,6 +736,7 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
     public function addAlternateImageUrls($alternateImageUrl)
     {
         $this->alternateImageUrls->append($alternateImageUrl);
+        $this->altImagesToUnique();
     }
 
     /**
@@ -967,6 +1005,35 @@ class Nosto_Object_Product_Product extends Nosto_AbstractObject implements
             return $validator->validate();
         } catch (Nosto_NostoException $e) {
             return false;
+        }
+    }
+
+    /**
+     * Makes the alternative images collection unique and removes
+     * the main product image from alt images if present
+     */
+    private function altImagesToUnique()
+    {
+        if ($this->alternateImageUrls->count() === 0) {
+            return;
+        }
+        $images = $this->getAlternateImageUrls();
+        $resetImages = false;
+        $duplicates = array_count_values($images);
+        foreach ($duplicates as $val => $count) {
+            if ($count > 1) {
+                $resetImages = true;
+                $images = array_unique($images);
+                break;
+            }
+        }
+        $key = array_search($this->getImageUrl(), $images, true);
+        if ($key !== false) {
+            $resetImages = true;
+            unset($images[$key]);
+        }
+        if ($resetImages) {
+            $this->setAlternateImageUrls(array_values($images));
         }
     }
 }

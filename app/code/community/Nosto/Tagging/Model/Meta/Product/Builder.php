@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -44,6 +44,7 @@ class Nosto_Tagging_Model_Meta_Product_Builder
      * @param Mage_Core_Model_Store|null $store
      * @param bool $useIndex
      * @throws Nosto_NostoException
+     * @throws Mage_Core_Exception
      *
      * @return Nosto_Tagging_Model_Meta_Product|null
      */
@@ -54,7 +55,9 @@ class Nosto_Tagging_Model_Meta_Product_Builder
     ) 
     {
         if ($store === null) {
-            $store = Mage::app()->getStore();
+            /** @var Nosto_Tagging_Helper_Data $helper */
+            $helper = Mage::helper('nosto_tagging');
+            $store = $helper->getStore();
         }
         if ($useIndex === true) {
             /* @var Nosto_Tagging_Model_Meta_Product $nostoProduct */

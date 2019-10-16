@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -42,6 +42,16 @@
 class Nosto_Operation_UpdateSettings extends Nosto_Operation_AbstractAuthenticatedOperation
 {
     /**
+     * Nosto_Operation_UpdateSettings constructor.
+     * @param Nosto_Types_Signup_AccountInterface $account
+     * @param string $activeDomain
+     */
+    public function __construct(Nosto_Types_Signup_AccountInterface $account, $activeDomain = '')
+    {
+        parent::__construct($account, $activeDomain);
+    }
+
+    /**
      * Sends a POST request to create a new account for a store in Nosto
      *
      * @param Nosto_Types_SettingsInterface $settings
@@ -51,9 +61,13 @@ class Nosto_Operation_UpdateSettings extends Nosto_Operation_AbstractAuthenticat
      */
     public function update(Nosto_Types_SettingsInterface $settings)
     {
-        $request = $this->initApiRequest($this->account->getApiToken(Nosto_Request_Api_Token::API_SETTINGS));
+        $request = $this->initApiRequest(
+            $this->account->getApiToken(Nosto_Request_Api_Token::API_SETTINGS),
+            $this->account->getName(),
+            $this->activeDomain
+        );
         $request->setPath(Nosto_Request_Api_ApiRequest::PATH_SETTINGS);
         $response = $request->put($settings);
-        return $this->checkResponse($request, $response);
+        return self::checkResponse($request, $response);
     }
 }

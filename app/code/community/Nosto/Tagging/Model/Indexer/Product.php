@@ -21,9 +21,11 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
+use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Class for indexing Nosto products
@@ -40,6 +42,12 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     const EVENT_TYPE_REINDEX_PRICE = 'catalog_reindex_price';
 
     /**
+     * The time after which the product will reindex
+     * 4 hours
+     */
+    const INDEXED_PRODUCT_EXPIRATION_TIME = 14400;
+
+    /**
      * A queue for products to be updated
      *
      * @var Mage_Catalog_Model_Product[]
@@ -54,7 +62,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     protected $_deleteQueue = array();
 
     /**
-     * Array containing already procecced product ids
+     * Array containing already processed product ids
      *
      * @var array
      */
@@ -74,8 +82,6 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
      * @var int
      */
     public static $maxBatchCount = 10000;
-
-
 
     /**
      * Matched Entities instruction array
@@ -134,7 +140,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     protected function addToReindexQueue(
         Mage_Catalog_Model_Product $product,
         $storeId
-    ) 
+    )
     {
         if (!isset($this->_reindexQueue[$storeId])) {
             $this->_reindexQueue[$storeId] = array();
@@ -154,7 +160,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     protected function isProcessed(
         Mage_Catalog_Model_Product $product,
         Mage_Core_Model_Store $store
-    ) 
+    )
     {
         $storeId = $store->getId();
         if (!isset($this->_processed[$storeId])) {
@@ -176,7 +182,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     protected function setProcessed(
         Mage_Catalog_Model_Product $product,
         Mage_Core_Model_Store $store
-    ) 
+    )
     {
         $storeId = $store->getId();
         if (empty($this->_processed[$storeId])) {
@@ -225,6 +231,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
         // Check if we're handling simple product with parents
         $products = Nosto_Tagging_Util_Product::toParentProducts($catalogProduct);
         foreach ($products as $product) {
+            /** @var Mage_Catalog_Model_Product $product */
             foreach ($product->getStoreIds() as $storeId) {
                 $this->addToReindexQueue($product, $storeId);
             }
@@ -292,8 +299,8 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
             foreach ($products as $product) {
                 /* @var Nosto_Tagging_Model_Meta_Product $nostoProduct */
                 $nostoProduct = Mage::getModel('nosto_tagging/meta_product');
-                if ($nostoProduct->reloadData($product, $store)
-                    && $nostoProduct instanceof Nosto_Tagging_Model_Meta_Product
+                if ($nostoProduct instanceof Nosto_Tagging_Model_Meta_Product
+                    && $nostoProduct->reloadData($product, $store)
                 ) {
                     $this->reindexProductInStore($nostoProduct, $store);
                 }
@@ -323,7 +330,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     /**
      * Reindexes a product in all store views and updates product to Nosto
      *
-     * @param Mage_Catalog_Model_Product[] $products
+     * @param Mage_Catalog_Model_Product[]|Nosto_Tagging_Model_Resource_Product_Collection $products
      */
     public function reindexAndUpdateMany($products)
     {
@@ -346,7 +353,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
      */
     protected function _processEvent(Mage_Index_Model_Event $event)
     {
-        if ($event->getType() == 'delete') {
+        if ($event->getType() === 'delete') {
             $this->flushDeleteQueue();
         } else {
             $this->flushReindexingQueue();
@@ -367,7 +374,6 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
         /* @var Mage_Core_Model_App_Emulation $emulation */
         $emulation = Mage::getSingleton('core/app_emulation');
         $env = $emulation->startEnvironmentEmulation($store->getId());
-
         $iterations = 1;
         $products = $this->getProductBatch($store, $iterations);
         $totalProductCount = $products->getSize();
@@ -385,10 +391,10 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
                 break;
             }
             $batchCount = count($products);
-            if ($batchCount == 0) {
+            if ($batchCount === 0) {
                 break;
             }
-            Nosto_Tagging_Helper_Log::info(
+            Nosto_Tagging_Helper_Log::logWithMemoryConsumption(
                 sprintf(
                     'Processing %d products in store %s [%d/%d]',
                     count($products),
@@ -401,6 +407,8 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
             foreach ($products as $product) {
                 try {
                     $changed += $this->reindexMagentoProductInStore($product, $store);
+                } catch (Nosto_Exception_MemoryOutOfBoundsException $e) {
+                    throw $e;
                 } catch (\Exception $e) {
                     Nosto_Tagging_Helper_Log::exception($e);
                 }
@@ -430,7 +438,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     protected function reindexMagentoProductInStore(
         Mage_Catalog_Model_Product $product,
         Mage_Core_Model_Store $store
-    ) 
+    )
     {
         $changed = 0;
         if ($this->isProcessed($product, $store)) {
@@ -472,8 +480,19 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
         Nosto_Tagging_Model_Meta_Product $nostoProduct,
         Mage_Core_Model_Store $store,
         $setSynced = false
-    ) 
+    )
     {
+        /* @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging');
+        $maxMemPercentage = $dataHelper->getIndexerMemoryPercentage($store);
+        if (Nosto_Util_Memory::getPercentageUsedMem() >= $maxMemPercentage) {
+            throw new Nosto_Exception_MemoryOutOfBoundsException(
+                sprintf(
+                    'Memory Out Of Bounds Error: Memory used by indexer is over %d%% allowed',
+                    $maxMemPercentage
+                )
+            );
+        }
         /** @var Mage_Core_Model_Date $dateHelper */
         $dateHelper = Mage::getSingleton('core/date');
         /* @var Nosto_Tagging_Model_Meta_Product $nostoProduct */
@@ -486,8 +505,10 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
             ->getFirstItem(); // @codingStandardsIgnoreLine
         if ($indexedProduct instanceof Nosto_Tagging_Model_Index) {
             $indexedMetaProduct = $indexedProduct->getNostoMetaProduct();
-            if ($indexedMetaProduct instanceof Nosto_Tagging_Model_Meta_Product === false
-                || $indexedMetaProduct != $nostoProduct
+
+            if (!$indexedMetaProduct instanceof Nosto_Tagging_Model_Meta_Product
+                || $indexedMetaProduct !== $nostoProduct
+                || $this->isExpired($indexedProduct)
             ) {
                 $indexedProduct->setNostoMetaProduct($nostoProduct);
                 $indexedProduct->setUpdatedAt($dateHelper->gmtDate());
@@ -506,12 +527,33 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
                 $indexedProduct->save();
             }
         }
-
         return $indexedProduct;
     }
 
     /**
+     * Check if indexed product is older than INDEXED_PRODUCT_EXPIRATION_TIME
+     *
+     * @param Nosto_Tagging_Model_Index $indexedProduct
+     * @return bool
+     */
+    protected function isExpired(Nosto_Tagging_Model_Index $indexedProduct)
+    {
+        /** @var Mage_Core_Model_Date $coreModel */
+        $coreModel = Mage::getSingleton('core/date');
+        $timestamp = (int) $coreModel->gmtTimestamp();
+
+        $updatedAt = strtotime($indexedProduct->getUpdatedAt());
+
+        if (!is_numeric($updatedAt)) {
+            return true;
+        }
+
+        return ($timestamp - $updatedAt > self::INDEXED_PRODUCT_EXPIRATION_TIME);
+    }
+
+    /**
      * Reindex all products in all stores where Nosto is installed
+     * @throws Nosto_Exception_MemoryOutOfBoundsException
      */
     public function reindexAll()
     {
@@ -522,7 +564,14 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
         $dataHelper = Mage::helper('nosto_tagging');
         foreach ($stores as $store) {
             if ($dataHelper->getUseProductIndexer($store)) {
-                $this->reindexAllInStore($store);
+                try {
+                    $this->reindexAllInStore($store);
+                } catch (Nosto_Exception_MemoryOutOfBoundsException $e) {
+                    Nosto_Tagging_Helper_Log::info($e->getMessage());
+                    throw $e;
+                } catch (\Exception $e) {
+                    NostoLog::exception($e);
+                }
             }
         }
         /* @var Nosto_Tagging_Model_Service_Product $service */
@@ -540,7 +589,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     public function reindexByProductIdsInStore(
         array $ids,
         Mage_Core_Model_Store $store
-    ) 
+    )
     {
         $start = microtime(true);
         Nosto_Tagging_Helper_Log::info(
@@ -563,7 +612,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
         $changed = 0;
         $batches = array_chunk($ids, self::$maxBatchSize);
         foreach ($batches as $productIds) {
-            /* @var Nosto_Tagging_Model_Resource_Product_Collection $products */
+            /* @var /Nosto_Tagging_Model_Resource_Product_Collection $products */
             $products = Mage::getModel('nosto_tagging/product')->getCollection();
             $products->addStoreFilter($store->getId())
                 ->addFieldToFilter('entity_id', array('in' => $productIds));
@@ -598,7 +647,7 @@ class Nosto_Tagging_Model_Indexer_Product extends Mage_Index_Model_Indexer_Abstr
     protected function getProductBatch(
         Mage_Core_Model_Store $store,
         $pageNumber = 1
-    ) 
+    )
     {
         $products = Mage::getModel('nosto_tagging/product')->getCollection();
         $products->addStoreFilter($store->getId())

@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -68,6 +68,7 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
      * @param Mage_Core_Model_Store $store the store model.
      *
      * @return null|string
+     * @throws Mage_Core_Exception
      */
     protected function buildImageUrl(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
     {
@@ -80,6 +81,7 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
         if ($this->isValidImage($img)) {
             // We build the image url manually in order get the correct base
             // url, even if this product is populated in the backend.
+            /** @noinspection PhpUnhandledExceptionInspection */
             $baseUrl = rtrim($store->getBaseUrl('media'), '/');
             $file = str_replace(DS, '/', $img);
             $file = ltrim($file, '/');
@@ -111,8 +113,18 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
     {
         /** @var Nosto_Tagging_Helper_Price $priceHelper */
         $priceHelper = Mage::helper('nosto_tagging/price');
+        $productClone = $product;
 
-        return $priceHelper->getProductTaggingPrice($product, $store, true);
+        /** @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging/data');
+        if ($dataHelper->isVariationEnabled($store)) {
+            // We need to set the default customer group here, otherwise Magento will
+            // return the price for the current user logged in group.
+            $productClone = clone $product;
+            $productClone->setGroupPrice(Nosto_Tagging_Helper_Variation::DEFAULT_CUSTOMER_GROUP_ID);
+        }
+
+        return $priceHelper->getProductTaggingPrice($productClone, $store, true);
     }
 
     /**
@@ -154,7 +166,7 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
         foreach ($attributes as $mageAttr => $nostoAttr) {
             $mapped = $nostoHelper->getMappedAttribute($mageAttr, $store);
             if ($mapped) {
-                $value = $this->getAttributeValue($product, $mapped);
+                $value = $this->getAttributeValue($product, $mapped, $store->getId());
                 if (!empty($value)) {
                     $method = sprintf('set%s', ucfirst($nostoAttr));
                     $this->$method($value);
@@ -168,13 +180,21 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
      *
      * @param Mage_Catalog_Model_Product $product
      * @param string $attributeName
+     * @param null|int $storeId
      * @return string
      * @suppress PhanUndeclaredMethod
      */
-    protected function getAttributeValue(Mage_Catalog_Model_Product $product, $attributeName)
+    protected function getAttributeValue(
+        Mage_Catalog_Model_Product $product,
+        $attributeName,
+        $storeId = null
+    )
     {
         $attribute = $product->getResource()->getAttribute($attributeName);
         if ($attribute instanceof Mage_Catalog_Model_Resource_Eav_Attribute) {
+            if ($storeId && method_exists($product, 'setStoreId')) {
+                $product->setStoreId($storeId);
+            }
             $attributeData = $product->getData($attributeName);
             /** @noinspection PhpParamsInspection */
             $attributeValue = $product->getAttributeText($attributeName);
@@ -192,9 +212,10 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
      * Get the custom attributes
      *
      * @param Mage_Catalog_Model_Product $product
+     * @param Mage_Core_Model_Store $store
      * @return array|null custom fields
      */
-    protected function loadCustomFields(Mage_Catalog_Model_Product $product)
+    protected function loadCustomFields(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
     {
         $customFields = array();
 
@@ -210,12 +231,12 @@ trait Nosto_Tagging_Model_Meta_Product_Trait
                     )
                 ) {
                     $attributeCode = $attribute->getAttributeCode();
-                    $attributeValue = $this->getAttributeValue($product, $attributeCode);
+                    $attributeValue = $this->getAttributeValue($product, $attributeCode, $store->getId());
                     if (is_scalar($attributeValue)) {
                         $customFields[$attributeCode] = $attributeValue;
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 Nosto_Tagging_Helper_Log::exception($e);
             }
         }

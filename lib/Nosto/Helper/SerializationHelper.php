@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -91,6 +91,9 @@ class Nosto_Helper_SerializationHelper extends Nosto_Helper_AbstractHelper
             }
             $key = self::toSnakeCase($key);
             $value = $object->$getter();
+            if (self::isNull($value)) {
+                continue;
+            }
             if ($value instanceof Iterator) {
                 $value = iterator_to_array($value);
             }
@@ -99,7 +102,7 @@ class Nosto_Helper_SerializationHelper extends Nosto_Helper_AbstractHelper
             } else {
                 if (is_array($value)) {
                     $json[$key] = array();
-                    if (self::isAssoc($value)) {
+                    if (Nosto_Helper_ArrayHelper::isAssoc($value)) {
                         foreach ($value as $k => $anObject) {
                             if (is_object($anObject)) {
                                 $json[$key][$k] = self::toArray($anObject);
@@ -138,8 +141,22 @@ class Nosto_Helper_SerializationHelper extends Nosto_Helper_AbstractHelper
             $rc = new ReflectionClass($obj);
             do {
                 $rp = array();
+
+                // Note that we will not include any properties in traits
+                $traits = $rc->getTraits();
+                $skipProperties = array();
+                if (!empty($traits)) {
+                    foreach ($traits as $trait) {
+                        foreach ($trait->getProperties() as $traitProperty) {
+                            $skipProperties[] = $traitProperty->getName();
+                        }
+                    }
+                }
                 /* @var $p \ReflectionProperty */
                 foreach ($rc->getProperties() as $p) {
+                    if (in_array($p->getName(), $skipProperties, true)) {
+                        continue;
+                    }
                     $p->setAccessible(true);
                     $rp[$p->getName()] = $p->getValue($obj);
                 }
@@ -169,17 +186,13 @@ class Nosto_Helper_SerializationHelper extends Nosto_Helper_AbstractHelper
     }
 
     /**
-     * Checks whether an array is associative or sequentially indexed as associative arrays are
-     * handled as objects
+     * Check for multiple types of invalid values in a variable and returns.
      *
-     * @param array $arr the array to check
-     * @return bool true if the array is associative
+     * @param $var
+     * @return bool
      */
-    public static function isAssoc(array $arr)
+    public static function isNull($var)
     {
-        if (array() === $arr) {
-            return false;
-        }
-        return array_keys($arr) !== range(0, count($arr) - 1);
+        return (!$var && $var !== 0 && $var !== '0' && $var !== false && $var !== 0.00);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -40,8 +40,14 @@
  * Model for OrderConfirm information. This is used when compiling the info about an
  * OrderConfirm that is sent to Nosto.
  */
-class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Types_Order_OrderInterface, Nosto_Types_ValidatableInterface, Nosto_Types_MarkupableInterface
+class Nosto_Object_Order_Order extends Nosto_AbstractObject implements
+    Nosto_Types_Order_OrderInterface,
+    Nosto_Types_ValidatableInterface,
+    Nosto_Types_MarkupableInterface,
+    Nosto_Types_HtmlEncodableInterface
 {
+    use Nosto_Mixins_HtmlEncoderTrait;
+
     /**
      * @var string visitor checksum
      */
@@ -172,9 +178,8 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
     /**
      * Sets the date when the OrderConfirm was placed in the format Y-m-d
      *
-     * @param \DateTimeInterface|\DateTime $createdAt the created date.
+     * @param \DateTimeInterface|\DateTime|string $createdAt the created date.
      *
-     * @throws Nosto_NostoException
      */
     public function setCreatedAt($createdAt)
     {
@@ -182,7 +187,7 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
             || (is_object($createdAt) && method_exists($createdAt, 'format'))) {
             $this->createdAt = $createdAt->format('Y-m-d H:i:s');
         } else {
-            throw new Nosto_NostoException('Invalid argumanet, expected DateTime or DateTimeInterface');
+            $this->createdAt = $createdAt;
         }
     }
 
@@ -213,11 +218,31 @@ class Nosto_Object_Order_Order extends Nosto_AbstractObject implements Nosto_Typ
     }
 
     /**
+     * Set the status code of the order
+     *
+     * @param string $orderStatusCode
+     */
+    public function setOrderStatusCode($orderStatusCode)
+    {
+        $this->orderStatusCode = $orderStatusCode;
+    }
+
+    /**
      * @inheritdoc
      */
     public function getOrderStatusLabel()
     {
         return $this->orderStatusLabel;
+    }
+
+    /**
+     * Set the status label of the order
+     *
+     * @param string $orderStatusLabel
+     */
+    public function setOrderStatusLabel($orderStatusLabel)
+    {
+        $this->orderStatusLabel = $orderStatusLabel;
     }
 
     /**

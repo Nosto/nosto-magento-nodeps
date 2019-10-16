@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -104,5 +104,13 @@ abstract class Nosto_Object_AbstractCollection implements Iterator, Countable
     public function toJson()
     {
         return Nosto_Helper_SerializationHelper::serialize($this);
+    }
+
+    /**
+     * Clears / resets the collection (empties the collection)
+     */
+    public function clear()
+    {
+        $this->var = array();
     }
 }

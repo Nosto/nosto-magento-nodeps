@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -85,6 +85,25 @@ class Nosto_Tagging_Helper_Log extends Mage_Core_Helper_Abstract
             Zend_Log::DEBUG,
             self::NOSTO_LOG_FILE,
             $attributes
+        );
+    }
+
+    /**
+     * Logs a message along with the memory consumption
+     *
+     * @param $message
+     * @return bool
+     */
+    public function logWithMemoryConsumption($message)
+    {
+        return self::info(
+            sprintf(
+                '%s [mem usage: %sM / %s] [realmem: %sM]',
+                $message,
+                Nosto_Util_Memory::getConsumption(),
+                Nosto_Util_Memory::getTotalMemoryLimit(),
+                Nosto_Util_Memory::getRealConsumption()
+            )
         );
     }
 

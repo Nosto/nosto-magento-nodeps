@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -63,24 +63,28 @@ $formKey = $session->getFormKey();
 
     // Products must be and array of objects [{productId: "123", skuId: "321"}]
     Nosto.addMultipleProductsToCart = function (products, element) {
+        var productsArray = [];
         var skus = [];
         products.forEach(function(product) {
             Nosto.trackAddToCartClick(product.productId, element);
+            productsArray.push(product.productId);
             skus.push(product.skuId);
         });
         var fields = {};
-        fields["product"] = skus.pop();
-        fields["related_product"] = skus;
+        fields["product"] = productsArray;
+        fields["skus"] = skus;
         fields["form_key"]= "<?php echo $formKey; ?>";
-        Nosto.postAddToCartForm(fields, "<?php echo $formAction; ?>");
+        Nosto.postAddToCartForm(fields, "<?php echo $this->getAddMultipleProductsToCartUrl() ?>");
     };
 
     // Product object must have fields productId and skuId {productId: 123, skuId: 321}
-    Nosto.addSkuToCart = function (product, element) {
+    Nosto.addSkuToCart = function (product, element, quantity) {
+        quantity = quantity || 1;
         Nosto.trackAddToCartClick(product.productId, element);
         var fields = {
             "product": product.productId,
             "sku": product.skuId,
+            "qty": quantity,
             "form_key": "<?php echo $formKey; ?>"
         };
         Nosto.postAddToCartForm(fields, "<?php echo $this->getAddSkuToCartUrl(); ?>");

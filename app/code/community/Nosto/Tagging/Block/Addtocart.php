@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -62,7 +62,9 @@ class Nosto_Tagging_Block_Addtocart extends Mage_Core_Block_Template
     {
         /** @var Nosto_Tagging_Helper_Url $urlHelper */
         $urlHelper = Mage::helper('nosto_tagging/url');
-        $store = Mage::app()->getStore();
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        $store = $helper->getStore();
 
         return $urlHelper->getAddToCartUrl($store);
     }
@@ -76,8 +78,26 @@ class Nosto_Tagging_Block_Addtocart extends Mage_Core_Block_Template
     {
         /** @var Nosto_Tagging_Helper_Url $urlHelper */
         $urlHelper = Mage::helper('nosto_tagging/url');
-        $store = Mage::app()->getStore();
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        $store = $helper->getStore();
 
         return $urlHelper->getNostoAddToCartUrl($store);
+    }
+
+    /**
+     * Returns the url for add to cart controller
+     *
+     * @return string
+     */
+    public function getAddMultipleProductsToCartUrl()
+    {
+        /** @var Nosto_Tagging_Helper_Url $urlHelper */
+        $urlHelper = Mage::helper('nosto_tagging/url');
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        $store = $helper->getStore();
+
+        return $urlHelper->getNostoAddMultipleProductsToCartUrl($store);
     }
 }

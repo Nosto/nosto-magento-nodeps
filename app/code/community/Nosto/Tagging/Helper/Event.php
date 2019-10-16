@@ -21,11 +21,9 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
-use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Helper class for event handling
@@ -50,4 +48,9 @@ class Nosto_Tagging_Helper_Event extends Mage_Core_Helper_Abstract
      * event name, fired after nosto shopping cart object loaded
      */
     const EVENT_NOSTO_CART_LOAD_AFTER = 'nosto_cart_load_after';
+
+    /*
+     * event name, fired after nosto category object loaded
+     */
+    const EVENT_NOSTO_CATEGORY_LOAD_AFTER = 'nosto_category_load_after';
 }

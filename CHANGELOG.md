@@ -1,5 +1,68 @@
 All notable changes to this project will be documented in this file. This project adheres to Semantic Versioning.
 
+### 3.11.3
+* Remove function parameter type check for compatibility with PHP < 5.6
+
+### 3.11.2
+* Implement new add multiple products to cart method to fix cart products having no image
+
+### 3.11.1
+* Fix add multiple products to cart javascript function where some products added could have no image or link
+
+### 3.11.0
+* Use mock products in category personalisation when preview mode is enabled
+* Ignore non-numeric product ids in Graphql responses
+* Add inventory level to SKU
+
+### 3.10.0
+* Add Nosto category personalization in the default Magento category sorting options
+
+### 3.9.0
+* Feature flag to set the a percentage of total PHP available memory that can be used by Nosto indexer
+* Exit indexer gracefully if the memory consumption goes over the predefined amount
+* Include active domain and Nosto account in API calls
+* Encode HTML characters automatically
+* Remove feature flag for real-time cart updates
+
+### 3.8.5
+* Handle overriding custom group pricing 
+
+### 3.8.4
+* Handle duplicate key exception gracefully when saving Nosto customer
+
+### 3.8.3
+* Bump Nosto SDK version to fix the double encoded Oauth redirect URL
+* Add null check to customer addresses
+
+### 3.8.2
+* Bump Nosto SDK version to support HTTP 2
+
+### 3.8.1
+* Bump magazine maximum PHP version to 7.3.0
+
+### 3.8.0
+* Add expiry check for Nosto indexed products
+* Add possibility to define quantity for Nosto’s add to cart
+* Fix bug for checking if graphql feature is available
+* Refactor method names
+* Add support for fetching category list sorting from Nosto (experimental)
+* Escape search term in tagging
+* Update Marketing Permission Via Api Call
+* Introduce CLI tools for reconnecting and removing Nosto account
+
+### 3.7.8
+* Add a feature flag to disable the sending of inventory level when an order is made
+
+### 3.7.7
+* Fix an issue that would cause product attributes and custom fields to have a wrong translation 
+
+### 3.7.6
+* Fix an issue in Magento Enterprise that would prevent to save a simple product if the logged user does not have permission to see the parent product.
+
+### 3.7.5
+* Handle line items without concrete product in order confirmation
+* Fix price variation when customer group variation has zero price
+
 ### 3.7.4
 * Add explicit boolean check for product building
 
@@ -35,7 +98,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ### 3.6.0
 * Improve error bubbling in Nosto account opening and in API calls
-* Add marketing permission constent for user tagging in order confirmation (GDPR compatibility) 
+* Add marketing permission consent for user tagging in order confirmation (GDPR compatibility) 
 
 ### 3.5.5
 * Fix the bundle product list price was incorrect if there is any optional item

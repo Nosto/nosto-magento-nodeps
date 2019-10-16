@@ -21,9 +21,11 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
+use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Info block to show the current configured currency formats for the viewed
@@ -62,10 +64,16 @@ class Nosto_Tagging_Block_Adminhtml_System_Config_Currency_Formats extends Mage_
     public function getCurrencyFormats()
     {
         $formats = array();
-        $storeId = $this->getRequest()->getParam('store');
+        try {
+            $storeId = $this->getRequest()->getParam('store');
+        } catch (\Exception $e) {
+            NostoLog::exception($e);
+        }
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
         /** @var Mage_Core_Model_Store[] $stores */
         if (!empty($storeId)) {
-            $stores = array(Mage::app()->getStore($storeId));
+            $stores = array($helper->getStore($storeId));
         } else {
             $stores = Mage::app()->getStores();
         }

@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -47,6 +47,7 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
      * @param Mage_Core_Model_Store|null $store the store to get the product data for.
      * @return bool
      * @throws Nosto_NostoException
+     * @throws Mage_Core_Exception
      */
     public function loadData(
         Mage_Catalog_Model_Product $sku,
@@ -54,8 +55,13 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
         Mage_Core_Model_Store $store = null
     )
     {
+        /** @var Nosto_Tagging_Helper_Data $dataHelper */
+        $dataHelper = Mage::helper('nosto_tagging');
+
         if ($store === null) {
-            $store = Mage::app()->getStore();
+            /** @var Nosto_Tagging_Helper_Data $helper */
+            $helper = Mage::helper('nosto_tagging');
+            $store = $helper->getStore();
         }
 
         if ($sku->getTypeId() !== Mage_Catalog_Model_Product_Type::TYPE_SIMPLE) {
@@ -72,12 +78,17 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
         $this->setPrice($this->buildProductPrice($sku, $store));
         $this->setListPrice($this->buildProductListPrice($sku, $store));
         $this->setAvailability($this->buildAvailability($sku));
+        /** @noinspection PhpUndefinedMethodInspection */
         if ((int)$sku->getVisibility() != Mage_Catalog_Model_Product_Visibility::VISIBILITY_NOT_VISIBLE) {
             $this->setUrl($this->buildUrl($sku, $store));
         }
         $this->amendCustomizableAttributes($sku, $store);
         $this->loadCustomFieldsFromConfigurableAttributes($sku, $parent, $store);
         $this->loadCustomFieldsFromAttributeSet($sku, $store);
+
+        if ($dataHelper->getUseInventoryLevel($store)) {
+            $this->amendInventoryLevel($sku);
+        }
 
         return true;
     }
@@ -96,13 +107,19 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging');
         if ($dataHelper->getUseCustomFields($store)) {
-            $customFields = $this->loadCustomFields($product);
+            $customFields = $this->loadCustomFields($product, $store);
             foreach ($customFields as $key => $value) {
                 $this->addCustomField($key, $value);
             }
         }
     }
 
+    /**
+     * @param Mage_Catalog_Model_Product $sku
+     * @param Mage_Catalog_Model_Product $parent
+     * @param Mage_Core_Model_Store $store
+     * @return bool
+     */
     protected function loadCustomFieldsFromConfigurableAttributes(
         Mage_Catalog_Model_Product $sku,
         Mage_Catalog_Model_Product $parent,
@@ -112,7 +129,7 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging');
         if (!$dataHelper->getUseCustomFields($store)) {
-            return;
+            return false;
         }
 
         /** @var Mage_Catalog_Model_Product_Type_Configurable $parentType */
@@ -123,17 +140,16 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
                 try {
                     $attributeCode = $configurableAttribute['attribute_code'];
                     if (!array_key_exists($attributeCode, $this->getCustomFields())) {
-                        $attributeValue = $this->getAttributeValue($sku, $attributeCode);
+                        $attributeValue = $this->getAttributeValue($sku, $attributeCode, $store->getId());
                         if (is_scalar($attributeValue)) {
                             $this->addCustomField($attributeCode, $attributeValue);
                         }
                     }
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     Nosto_Tagging_Helper_Log::exception($e);
                 }
             }
         }
-
         return true;
     }
 
@@ -163,5 +179,28 @@ class Nosto_Tagging_Model_Meta_Sku extends Nosto_Object_Product_Sku
         }
 
         return $availability;
+    }
+
+    /**
+     * Adds the stock level / inventory level for SKU
+     *
+     * @param Mage_Catalog_Model_Product $sku the product sku model.
+     *
+     */
+    protected function amendInventoryLevel(Mage_Catalog_Model_Product $sku)
+    {
+        /* @var Nosto_Tagging_Helper_Stock $stockHelper */
+        $stockHelper = Mage::helper('nosto_tagging/stock');
+        try {
+            $this->setInventoryLevel($stockHelper->getQty($sku));
+        } catch (\Exception $e) {
+            Nosto_Tagging_Helper_Log::error(
+                'Failed to resolve inventory level for SKU %d to tags. Error message was: %s',
+                array(
+                    $sku->getId(),
+                    $e->getMessage()
+                )
+            );
+        }
     }
 }

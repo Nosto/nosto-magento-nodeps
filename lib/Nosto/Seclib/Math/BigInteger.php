@@ -45,7 +45,6 @@
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2006 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
- * @link      http://pear.php.net/package/Math_BigInteger
  */
 
 
@@ -444,6 +443,9 @@ class Nosto_Seclib_Math_BigInteger
                 // (?<=^|-)0*: find any 0's that are preceded by the start of the string or by a - (ie. octals)
                 // [^-0-9].*: find any non-numeric characters and then any characters that follow that
                 $x = preg_replace('#(?<!^)(?:-).*|(?<=^|-)0*|[^-0-9].*#', '', $x);
+                if (!strlen($x) || $x == '-') {
+                    $x = '0';
+                }
 
                 switch (MATH_BIGINTEGER_MODE) {
                     case self::MODE_GMP:
@@ -2690,7 +2692,14 @@ class Nosto_Seclib_Math_BigInteger
     {
         switch (MATH_BIGINTEGER_MODE) {
             case self::MODE_GMP:
-                return gmp_cmp($this->value, $y->value);
+                $r = gmp_cmp($this->value, $y->value);
+                if ($r < -1) {
+                    $r = -1;
+                }
+                if ($r > 1) {
+                    $r = 1;
+                }
+                return $r;
             case self::MODE_BCMATH:
                 return bccomp($this->value, $y->value, 0);
         }

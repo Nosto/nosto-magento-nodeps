@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -65,11 +65,12 @@ class Nosto_Tagging_Block_Variation extends Mage_Core_Block_Template
     {
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging');
-        if ($dataHelper->isMultiCurrencyMethodExchangeRate(Mage::app()->getStore())) {
-            return Mage::app()->getStore()->getCurrentCurrencyCode();
-        } elseif ($dataHelper->isVariationEnabled(Mage::app()->getStore())) {
-            $groupId = Mage::getSingleton('customer/session')->getCustomerGroupId();
-
+        if ($dataHelper->isMultiCurrencyMethodExchangeRate($dataHelper->getStore())) {
+            return $dataHelper->getStore()->getCurrentCurrencyCode();
+        } elseif ($dataHelper->isVariationEnabled($dataHelper->getStore())) {
+            /** @var Mage_Customer_Model_Session $sessionModel */
+            $sessionModel = Mage::getSingleton('customer/session');
+            $groupId = $sessionModel->getCustomerGroupId();
             /** @var Mage_Customer_Model_Group $customerGroup */
             $customerGroup = Mage::getModel('customer/group')->load($groupId);
             if ($customerGroup instanceof Mage_Customer_Model_Group) {
@@ -92,9 +93,9 @@ class Nosto_Tagging_Block_Variation extends Mage_Core_Block_Template
         /** @var Nosto_Tagging_Helper_Data $helper */
         $helper = Mage::helper('nosto_tagging');
 
-        $enabled = $helper->isMultiCurrencyMethodExchangeRate(Mage::app()->getStore());
+        $enabled = $helper->isMultiCurrencyMethodExchangeRate($helper->getStore());
         if (!$enabled) {
-            $enabled = $helper->isVariationEnabled(Mage::app()->getStore());
+            $enabled = $helper->isVariationEnabled($helper->getStore());
         }
 
         return $enabled;

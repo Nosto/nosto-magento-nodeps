@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -39,8 +39,12 @@
 /**
  * Model class containing information about the OrderConfirm status of an OrderConfirm
  */
-class Nosto_Object_Order_OrderStatus extends Nosto_AbstractObject implements Nosto_Types_Order_StatusInterface
+class Nosto_Object_Order_OrderStatus extends Nosto_AbstractObject implements
+    Nosto_Types_Order_StatusInterface,
+    Nosto_Types_HtmlEncodableInterface
 {
+    use Nosto_Mixins_HtmlEncoderTrait;
+
     /**
      * @var string the OrderConfirm status code as flagged via the payment provider
      */

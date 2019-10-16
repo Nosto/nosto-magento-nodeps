@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -74,7 +74,7 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
     }
 
     /**
-     * Servialize the object to html
+     * Serialize the object to html
      *
      * @param mixed $object to be serialized
      * @param string $key $key the html element class
@@ -85,12 +85,16 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
      */
     private static function toHtml($object, $key, $spaces = 0, $indent = 2, $style = null)
     {
-        if (!$object && $object !== 0 && $object !== '0' && $object !== false) {
-            return "";
+        if (Nosto_Helper_SerializationHelper::isNull($object)) {
+            return '';
         }
 
         if ($object instanceof Nosto_Types_SanitizableInterface) {
             $object = $object->sanitize();
+        }
+
+        if ($object instanceof Nosto_Types_HtmlEncodableInterface) {
+            $object->htmlEncodeVars();
         }
 
         $spacesStr = str_repeat(' ', $spaces);
@@ -145,7 +149,7 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
     private static function arrayToHtml($object, $key, $spaces, $indent, $traversable, $snakeCaseKey)
     {
         $markup = '';
-        $isAssociative = is_array($traversable) && Nosto_Helper_SerializationHelper::isAssoc($traversable);
+        $isAssociative = is_array($traversable) && Nosto_Helper_ArrayHelper::isAssoc($traversable);
         foreach ($traversable as $index => $childValue) {
             if ($object instanceof Nosto_Types_MarkupableCollectionInterface && $object->getChildMarkupKey()) {
                 $childMarkupKey = $object->getChildMarkupKey();
@@ -166,5 +170,74 @@ class Nosto_Helper_HtmlMarkupSerializationHelper extends Nosto_Helper_AbstractHe
             }
         }
         return $markup;
+    }
+
+    /**
+     * Checks if a class variable can be encoded.
+     * In practice checks that a getter and a setter for the property
+     * is found from the class.
+     *
+     * @param $class
+     * @param $variable
+     * @return bool
+     */
+    public static function encodableClassVariable($class, $variable)
+    {
+        $getter = 'get' . str_replace('_', '', $variable);
+        $setter = 'set' . str_replace('_', '', $variable);
+        if (!method_exists($class, $getter) || !method_exists($class, $setter)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array|string|Nosto_Object_StringCollection $val
+     * @return array|string|Nosto_Object_StringCollection
+     * @throws Nosto_NostoException
+     */
+    public static function encodeHtmlEntities($val)
+    {
+        if ($val instanceof Nosto_Object_StringCollection) {
+            $encodedCollection = clone $val;
+            $encodedCollection->clear();
+            foreach ($val as $key => $item) {
+                 $encodedCollection->append(self::encodeHtmlEntities($item));
+            }
+            return $encodedCollection;
+        } elseif (is_array($val)) {
+            $encodedArray = array();
+            foreach ($val as $key => $item) {
+                $encodedArray[$key] = self::encodeHtmlEntities($item);
+            }
+            return $encodedArray;
+        } elseif (is_string($val)) {
+            return htmlspecialchars($val, ENT_QUOTES);
+        }
+        throw new Nosto_NostoException('This method only supports encoding string and array types');
+    }
+
+    /**
+     * Checks if value can be encoded with self::encodeHtmlEntities()
+     *
+     * @param $value
+     * @return bool
+     */
+    public static function canBeEncoded($value)
+    {
+        if (is_string($value) || $value instanceof Nosto_Object_StringCollection) {
+            return true;
+        }
+        // We need to check that the array contains only scalar values or other arrays
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if (!self::canBeEncoded($item)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }

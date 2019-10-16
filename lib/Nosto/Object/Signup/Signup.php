@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -99,11 +99,9 @@ class Nosto_Object_Signup_Signup extends Nosto_Object_Settings implements Nosto_
         $this->setPlatform($platform);
         $this->setSignupApiToken(new Nosto_Request_Api_Token(Nosto_Request_Api_Token::API_CREATE, $signupApiToken));
         $this->setPartnerCode($partnerCode);
-        $this->addApiToken(Nosto_Request_Api_Token::API_PRODUCTS);
-        $this->addApiToken(Nosto_Request_Api_Token::API_SSO);
-        $this->addApiToken(Nosto_Request_Api_Token::API_EXCHANGE_RATES);
-        $this->addApiToken(Nosto_Request_Api_Token::API_SETTINGS);
-        $this->addApiToken(Nosto_Request_Api_Token::API_EMAIL);
+        foreach (Nosto_Request_Api_Token::$tokenNames as $token) {
+            $this->addApiToken($token);
+        }
     }
 
     /**

@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -34,9 +34,15 @@
  */
 class Nosto_Tagging_Block_Adminhtml_System_Config_Variation_Switch extends Mage_Adminhtml_Block_System_Config_Form_Field
 {
+    /**
+     * @param Varien_Data_Form_Element_Abstract $element
+     * @return string
+     */
     protected function _getElementHtml(Varien_Data_Form_Element_Abstract $element)
     {
-        $store = $store = Mage::app()->getStore();
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        $store = $helper->getStore();
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging');
         if (!$dataHelper->multiCurrencyDisabled($store)) {
@@ -48,7 +54,6 @@ class Nosto_Tagging_Block_Adminhtml_System_Config_Variation_Switch extends Mage_
                 'comment', $comment
             );
         }
-
         return parent::_getElementHtml($element);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -30,7 +30,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -77,6 +77,31 @@ abstract class Nosto_Object_AbstractPerson extends Nosto_AbstractObject implemen
      * @var boolean the opt-in status for the person
      */
     private $marketingPermission;
+
+    /**
+     * @var string gender
+     */
+    private $gender;
+
+    /**
+     * @var string date of birth
+     */
+    private $dateOfBirth;
+
+    /**
+     * @var string the region of the person
+     */
+    private $region;
+
+    /**
+     * @var string the city of the person
+     */
+    private $city;
+
+    /**
+     * @var string the street of the person
+     */
+    private $street;
 
     public function __construct()
     {
@@ -214,5 +239,90 @@ abstract class Nosto_Object_AbstractPerson extends Nosto_AbstractObject implemen
     public function setOptedIn($optedIn)
     {
         $this->setMarketingPermission($optedIn);
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getGender()
+    {
+        return $this->gender;
+    }
+
+    /**
+     * @param string $gender
+     */
+    public function setGender($gender)
+    {
+        $this->gender = $gender;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDateOfBirth()
+    {
+        return $this->dateOfBirth;
+    }
+
+    /**
+     * @param \DateTime|\DateTimeInterface|string $dateOfBirth
+     */
+    public function setDateOfBirth($dateOfBirth)
+    {
+        if ($dateOfBirth instanceof DateTime
+            || (is_object($dateOfBirth) && method_exists($dateOfBirth, 'format'))) {
+            $this->dateOfBirth = $dateOfBirth->format('Y-m-d');
+        } else {
+            $this->dateOfBirth = $dateOfBirth;
+        }
+    }
+
+    /**
+     * @param string $city
+     */
+    public function setCity($city)
+    {
+        $this->city = $city;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getCity()
+    {
+        return $this->city;
+    }
+
+    /**
+     * @param string $region
+     */
+    public function setRegion($region)
+    {
+        $this->region = $region;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getRegion()
+    {
+        return $this->region;
+    }
+
+    /**
+     * @param string $street
+     */
+    public function setStreet($street)
+    {
+        $this->street = $street;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getStreet()
+    {
+        return $this->street;
     }
 }

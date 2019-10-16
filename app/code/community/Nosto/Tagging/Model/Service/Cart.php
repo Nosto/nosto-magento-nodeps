@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -59,6 +59,11 @@ class Nosto_Tagging_Model_Service_Cart
         }
         $service = new Nosto_Operation_CartOperation($account);
 
-        return $service->updateCart($cartUpdate, $nostoCustomerId, $account->getName());
+        try {
+            return $service->updateCart($cartUpdate, $nostoCustomerId, $account->getName());
+        } catch (Nosto_Request_Http_Exception_AbstractHttpException $e) {
+            NostoLog::exception($e);
+        }
+        return false;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto_Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @copyright 2019 Nosto_Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -59,6 +59,8 @@ class Nosto_Request_Http_HttpRequest
     const METHOD_DELETE = 'DELETE';
     const HEADER_AUTHORIZATION = 'Authorization';
     const HEADER_CONTENT_TYPE = 'Content-type';
+    const HEADER_NOSTO_ACCOUNT= 'X-Nosto-account';
+    const HEADER_ACTIVE_DOMAIN = 'X-Nosto-active-domain';
 
     /**
      * @var string user-agent to use for all requests
@@ -111,7 +113,6 @@ class Nosto_Request_Http_HttpRequest
      * Nosto_Request_Http_Adapter_Curl is preferred if available.
      *
      * @param Nosto_Request_Http_Adapter_Adapter|null $adapter the http request adapter to use
-     * @throws Nosto_NostoException
      */
     public function __construct(Nosto_Request_Http_Adapter_Adapter $adapter = null)
     {
@@ -255,6 +256,22 @@ class Nosto_Request_Http_HttpRequest
     }
 
     /**
+     * Adds Nosto_Nosto account to the headers
+     * @param $nostoAccount
+     */
+    public function setNostoAccountHeader($nostoAccount) {
+        $this->addHeader(self::HEADER_NOSTO_ACCOUNT, $nostoAccount);
+    }
+
+    /**
+     * Adds active domain to the headers
+     * @param $activeDomain
+     */
+    public function setActiveDomainHeader($activeDomain) {
+        $this->addHeader(self::HEADER_ACTIVE_DOMAIN, $activeDomain);
+    }
+
+    /**
      * Adds a new header to the request.
      *
      * @param string $key the header key, e.g. 'Content-type'.
@@ -310,6 +327,7 @@ class Nosto_Request_Http_HttpRequest
      *
      * @param string $username the user name.
      * @param string $password the password.
+     * @throws Nosto_NostoException
      */
     public function setAuthBasic($username, $password)
     {
@@ -321,7 +339,7 @@ class Nosto_Request_Http_HttpRequest
      *
      * @param string $type the auth type (use AUTH_ constants).
      * @param mixed $value the auth header value, format depending on the auth type.
-     * @throws Exception if an incorrect auth type is given.
+     * @throws Nosto_NostoException if an incorrect auth type is given.
      */
     public function setAuth($type, $value)
     {
@@ -348,6 +366,7 @@ class Nosto_Request_Http_HttpRequest
      * Convenience method for setting the bearer auth type.
      *
      * @param string $token the access token.
+     * @throws Exception
      */
     public function setAuthBearer($token)
     {
@@ -420,7 +439,11 @@ class Nosto_Request_Http_HttpRequest
      */
     public static function buildUri($uri, array $replaceParams)
     {
-        return strtr($uri, $replaceParams);
+        $encoded = array();
+        foreach ($replaceParams as $index => $param) {
+            $encoded[$index] = urlencode($param);
+        }
+        return strtr($uri, $encoded);
     }
 
     /**

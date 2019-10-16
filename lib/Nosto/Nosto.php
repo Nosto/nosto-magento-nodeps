@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto_Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @copyright 2019 Nosto_Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -51,9 +51,11 @@ class Nosto_Nosto
     const CODE_ACCOUNT_CONNECT_REJECT = 'account_connect_reject';
 
     const DEFAULT_NOSTO_SERVER_URL = 'connect.nosto.com';
+    const DEFAULT_NOSTO_EMAIL_WIDGET_BASE_URL = 'https://connect.nosto.com';
     const DEFAULT_NOSTO_WEB_HOOK_BASE_URL = 'https://my.nosto.com';
     const DEFAULT_NOSTO_OAUTH_BASE_URL = 'https://my.nosto.com/oauth';
     const DEFAULT_NOSTO_API_BASE_URL = 'https://api.nosto.com';
+    const DEFAULT_NOSTO_GRAPHQL_BASE_URL = 'https://api.nosto.com';
     const DEFAULT_NOSTO_IFRAME_ORIGIN_REGEXP = '(https:\/\/(.*)\.hub\.nosto\.com)|(https:\/\/my\.nosto\.com)'; //codingStandardsIgnoreLine
 
     const URL_PARAM_MESSAGE_TYPE = 'message_type';
@@ -77,6 +79,11 @@ class Nosto_Nosto
         return self::getEnvVariable('NOSTO_SERVER_URL', self::DEFAULT_NOSTO_SERVER_URL);
     }
 
+    public static function getEmailWidgetBaseUrl()
+    {
+        return self::getEnvVariable('NOSTO_EMAIL_WIDGET_BASE_URL', self::DEFAULT_NOSTO_EMAIL_WIDGET_BASE_URL);
+    }
+
     public static function getBaseUrl()
     {
         return self::getEnvVariable('NOSTO_WEB_HOOK_BASE_URL', self::DEFAULT_NOSTO_WEB_HOOK_BASE_URL);
@@ -92,6 +99,11 @@ class Nosto_Nosto
         return self::getEnvVariable('NOSTO_API_BASE_URL', self::DEFAULT_NOSTO_API_BASE_URL);
     }
 
+    public static function getGraphqlBaseUrl()
+    {
+        return self::getEnvVariable('NOSTO_GRAPHQL_BASE_URL', self::DEFAULT_NOSTO_GRAPHQL_BASE_URL);
+    }
+
     public static function getIframeOriginRegex()
     {
         return self::getEnvVariable('NOSTO_IFRAME_ORIGIN_REGEXP', self::DEFAULT_NOSTO_IFRAME_ORIGIN_REGEXP);
@@ -104,71 +116,13 @@ class Nosto_Nosto
      * @param Nosto_Request_Http_HttpRequest $request the request object to take additional info from.
      * @param Nosto_Request_Http_HttpResponse $response the response object to take additional info from.
      * @throws Nosto_Request_Http_Exception_AbstractHttpException the exception.
+     * @deprecated No longer used by internal code and not recommended.
+     * Use \Exception\Builder::fromHttpRequestAndResponse() instead
      */
     public static function throwHttpException(
         Nosto_Request_Http_HttpRequest $request,
         Nosto_Request_Http_HttpResponse $response
     ) {
-        $message = '';
-        $jsonResponse = $response->getJsonResult();
-
-        $errors = self::parseErrorsFromResponse($response);
-        if (isset($jsonResponse->type)
-            && isset($jsonResponse->message)
-        ) {
-            if (isset($jsonResponse->message)) {
-                $message .= $jsonResponse->message;
-            }
-            if (!empty($errors)) {
-                $message .= ' | ' . $errors;
-            }
-            throw new Nosto_Request_Api_Exception_ApiResponseException(
-                $message,
-                $response->getCode(), // http status code
-                null,
-                $request,
-                $response
-            );
-        } else {
-            if ($response->getMessage()) {
-                $message .= $response->getMessage();
-            }
-            if (!empty($errors)) {
-                $message .= ' | ' . $errors;
-            }
-            throw new Nosto_Request_Http_Exception_HttpResponseException(
-                $message,
-                $response->getCode(),
-                null,
-                $request,
-                $response
-            );
-        }
-    }
-
-    /**
-     * Parses errors from Nosto_Request_Http_HttpResponse
-     * @param Nosto_Request_Http_HttpResponse $response
-     * @return string
-     */
-    public static function parseErrorsFromResponse(Nosto_Request_Http_HttpResponse $response)
-    {
-        $json = $response->getJsonResult();
-        $errorStr = '';
-        if (isset($json->errors)
-            && is_array($json->errors)
-            && !empty($json->errors)
-        ) {
-            foreach ($json->errors as $stdClassError) {
-                if (isset($stdClassError->errors)) {
-                    $errorStr .= $stdClassError->errors;
-                }
-                if (isset($stdClassError->product_id)) {
-                    $errorStr .= sprintf('(product #%s)', $stdClassError->product_id);
-                }
-            }
-        }
-
-        return $errorStr;
+        throw Nosto_Exception_Builder::fromHttpRequestAndResponse($request, $response);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -47,6 +47,7 @@ class Nosto_Request_Api_Token extends Nosto_AbstractObject implements Nosto_Type
     const API_SETTINGS = 'settings';
     const API_EMAIL = 'email';
     const API_CREATE = 'create'; // Special token related to the platform
+    const API_GRAPHQL = 'apps'; // Special token related to the platform
 
     /**
      * @var array list of valid api tokens to request from Nosto.
@@ -56,7 +57,8 @@ class Nosto_Request_Api_Token extends Nosto_AbstractObject implements Nosto_Type
         self::API_PRODUCTS,
         self::API_EXCHANGE_RATES,
         self::API_SETTINGS,
-        self::API_EMAIL
+        self::API_EMAIL,
+        self::API_GRAPHQL
     );
     /**
      * @var string the token name, must be one of the defined tokens from self::$tokenNames.

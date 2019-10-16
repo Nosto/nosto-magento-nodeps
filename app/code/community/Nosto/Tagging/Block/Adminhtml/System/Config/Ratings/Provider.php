@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -70,6 +70,10 @@ class Nosto_Tagging_Block_Adminhtml_System_Config_Ratings_Provider
         return $html;
     }
 
+    /**
+     * @param $item
+     * @return string
+     */
     protected function renderOption($item)
     {
         $tdCss = 'vertical-align: middle; border-bottom: 1px gainsboro solid; padding: 4px 0 4px 0';

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -53,10 +53,11 @@ class Nosto_Operation_UpsertProduct extends Nosto_Operation_AbstractAuthenticate
      * Constructor.
      *
      * @param Nosto_Types_Signup_AccountInterface $account the account object.
+     * @param string $activeDomain
      */
-    public function __construct(Nosto_Types_Signup_AccountInterface $account)
+    public function __construct(Nosto_Types_Signup_AccountInterface $account, $activeDomain = '')
     {
-        parent::__construct($account);
+        parent::__construct($account, $activeDomain);
         $this->collection = new Nosto_Object_Product_ProductCollection();
     }
 
@@ -71,17 +72,30 @@ class Nosto_Operation_UpsertProduct extends Nosto_Operation_AbstractAuthenticate
     }
 
     /**
+     * Wrapper to call clear collection
+     */
+    public function clearCollection()
+    {
+        $this->collection->clear();
+    }
+
+    /**
      * Sends a POST request to create or update all the products currently in the collection.
      *
      * @return bool if the request was successful.
-     * @throws Nosto_NostoException on failure.
      * @throws Nosto_Request_Http_Exception_AbstractHttpException
+     * @throws Nosto_NostoException on failure.
+     * @throws \Exception
      */
     public function upsert()
     {
-        $request = $this->initApiRequest($this->account->getApiToken(Nosto_Request_Api_Token::API_PRODUCTS));
+        $request = $this->initApiRequest(
+            $this->account->getApiToken(Nosto_Request_Api_Token::API_PRODUCTS),
+            $this->account->getName(),
+            $this->activeDomain
+        );
         $request->setPath(Nosto_Request_Api_ApiRequest::PATH_PRODUCTS_UPSERT);
         $response = $request->post($this->collection);
-        return $this->checkResponse($request, $response);
+        return self::checkResponse($request, $response);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto_Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @copyright 2019 Nosto_Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -49,6 +49,7 @@ class Nosto_Request_Api_ApiRequest extends Nosto_Request_Http_HttpRequest
     const PATH_PRODUCTS_UPDATE = '/v1/products/update';
     const PATH_PRODUCTS_UPSERT = '/v1/products/upsert';
     const PATH_PRODUCTS_DISCONTINUE = '/v1/products/discontinue';
+    const PATH_MARKETING_PERMISSION = '/v1/customers/consent/{email}/{state}';
     const PATH_CURRENCY_EXCHANGE_RATE = '/exchangerates';
     const PATH_SETTINGS = '/settings';
     const PATH_CART_UPDATE = '/v1/cart/update';

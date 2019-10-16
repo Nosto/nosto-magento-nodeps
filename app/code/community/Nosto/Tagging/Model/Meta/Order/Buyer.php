@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -45,8 +45,10 @@ class Nosto_Tagging_Model_Meta_Order_Buyer extends Nosto_Object_Order_Buyer
     public function loadData(Mage_Sales_Model_Order $order)
     {
         $taggingHelper = Mage::helper('nosto_tagging');
-        $store = Mage::app()->getStore();
-        /* @var Nosto_Tagging_Helper_Data $helper */
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        $store = $helper->getStore();
+        /* @var Nosto_Tagging_Helper_Data $taggingHelper */
         if (!$taggingHelper->getSendCustomerData($store)) {
             return false;
         }
@@ -60,7 +62,7 @@ class Nosto_Tagging_Model_Meta_Order_Buyer extends Nosto_Object_Order_Buyer
         $address = $order->getBillingAddress();
         if ($address instanceof Mage_Sales_Model_Order_Address) {
             $this->setPhone($address->getTelephone());
-            $this->setPostcode($address->getPostcode());
+            $this->setPostCode($address->getPostcode());
             $this->setCountry($address->getCountry());
         }
 

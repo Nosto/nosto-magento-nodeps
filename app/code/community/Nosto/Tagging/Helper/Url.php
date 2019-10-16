@@ -21,9 +21,11 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
+use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Helper class for building urls.
@@ -114,6 +116,11 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
     const NOSTO_ADD_TO_CART_PATH = 'nosto/addToCart/add';
 
     /**
+     * Nosto's add multiple products to cart controller
+     */
+    const NOSTO_ADD_MULTIPLE_TO_CART_PATH = 'nosto/addToCart/addMultipleProductsToCart';
+
+    /**
      * Path to Nosto's restore cart controller
      */
     const NOSTO_PATH_RESTORE_CART = 'nosto/cart';
@@ -156,7 +163,6 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
      */
     public function getPreviewUrlProduct(Mage_Core_Model_Store $store)
     {
-        $productUrl = '';
         /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
         $collection = Mage::getModel('catalog/product')
             ->getCollection()
@@ -184,7 +190,7 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
 
                         return $productUrl;
                     }
-                } catch (Nosto_NostoException $e) {
+                } catch (\Exception $e) {
                     Nosto_Tagging_Helper_Log::exception($e);
                 }
             }
@@ -228,11 +234,15 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
             // Since the Mage_Catalog_Model_Category::getUrl() doesn't
             // accept any arguments and always returns an url with SID,
             // we'll need to remove the sid manually from the URL
-            $url = $this->removeQueryParamFromUrl(
-                $url,
-                self::MAGENTO_URL_PARAMETER_SID
-            );
-            $categoryUrl = $this->addNostoPreviewParameter($url);
+            try {
+                $url = $this->removeQueryParamFromUrl(
+                    $url,
+                    self::MAGENTO_URL_PARAMETER_SID
+                );
+                $categoryUrl = $this->addNostoPreviewParameter($url);
+            } catch (\Exception $e) {
+                NostoLog::exception($e);
+            }
         }
 
         return $categoryUrl;
@@ -381,10 +391,15 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
         );
         $productUrl = $product->getUrlInStore($urlParams);
         if ($helper->getUsePrettyProductUrls($store)) {
-            $productUrl = $this->removeQueryParamFromUrl(
-                $productUrl,
-                self::MAGENTO_URL_PARAMETER_STORE
-            );
+            try {
+                $productUrl = $this->removeQueryParamFromUrl(
+                    $productUrl,
+                    self::MAGENTO_URL_PARAMETER_STORE
+                );
+            } catch (\Exception $e) {
+                NostoLog::exception($e);
+                return $productUrl;
+            }
         }
 
         //Skip the product url has the string '_ignore_category'
@@ -414,6 +429,7 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
      * @param $url
      * @param $param
      * @return string
+     * @throws Zend_Uri_Exception
      */
     public function removeQueryParamFromUrl($url, $param)
     {
@@ -437,7 +453,7 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
         );
 
         return $url;
-    }
+    }/** @noinspection PhpDocMissingThrowsInspection */
 
     /**
      * Returns front page URL of the store
@@ -450,16 +466,35 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
         /* @var Nosto_Tagging_Helper_Data $helper */
         $helper = Mage::helper('nosto_tagging');
         if (!$helper->getUsePrettyProductUrls($store)) {
+            /** @noinspection PhpUnhandledExceptionInspection */
             $url = Nosto_Request_Http_HttpRequest::replaceQueryParamInUrl(
                 self::MAGENTO_URL_PARAMETER_STORE,
                 $store->getCode(),
                 $store->getBaseUrl(self::$urlType)
             );
         } else {
+            /** @noinspection PhpUnhandledExceptionInspection */
             $url = $store->getBaseUrl(self::$urlType);
         }
 
         return $url;
+    }
+
+    /**
+     * Returns the store domain
+     *
+     * @param $store
+     * @return string
+     */
+    public function getActiveDomain($store)
+    {
+        $storeFrontUrl = $this->getFrontPageUrl($store);
+        try {
+            return Nosto_Helper_UrlHelper::parseDomain($storeFrontUrl);
+        } catch (\Exception $e) {
+            Nosto_Tagging_Helper_Log::exception($e);
+            return '';
+        }
     }
 
     /**
@@ -506,14 +541,7 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
      */
     public function getAddToCartUrl(Mage_Core_Model_Store $store)
     {
-        $defaultParams = $this->getUrlOptionsWithNoSid($store);
-        $defaultParams[self::MAGENTO_URL_OPTION_SECURE] = 1;
-        $url = Mage::getUrl(
-            self::MAGENTO_ADD_TO_CART_PATH,
-            $defaultParams
-        );
-
-        return $url;
+        return $this->getAddToCartUrlByAction($store, self::MAGENTO_ADD_TO_CART_PATH);
     }
 
     /**
@@ -525,15 +553,37 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
      */
     public function getNostoAddToCartUrl(Mage_Core_Model_Store $store)
     {
+        return $this->getAddToCartUrlByAction($store, self::NOSTO_ADD_TO_CART_PATH);
+    }
+
+    /**
+     * Gets the absolute URL to the Nosto's add multiple to cart controller and action
+     *
+     * @param Mage_Core_Model_Store $store the store to get the url for.
+     *
+     * @return string the url.
+     */
+    public function getNostoAddMultipleProductsToCartUrl(Mage_Core_Model_Store $store)
+    {
+        return $this->getAddToCartUrlByAction($store, self::NOSTO_ADD_MULTIPLE_TO_CART_PATH);
+    }
+
+    /**
+     * Wrapper that returns URL with action in add to cart controller
+     * @param Mage_Core_Model_Store $store
+     * @param $action
+     * @return string
+     */
+    protected function getAddToCartUrlByAction(Mage_Core_Model_Store $store, $action)
+    {
         $defaultParams = $this->getUrlOptionsWithNoSid($store);
         $defaultParams[self::MAGENTO_URL_OPTION_SECURE] = 1;
-        $url = Mage::getUrl(
-            self::NOSTO_ADD_TO_CART_PATH,
+        return Mage::getUrl(
+            $action,
             $defaultParams
         );
-
-        return $url;
     }
+
 
     /**
      * Gets the absolute URL to the Nosto configuration page
@@ -547,10 +597,10 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
         $params = array(
             self::MAGENTO_URL_OPTION_STORE_CODE => $store->getCode()
         );
-        /** @var Mage_Adminhtml_Helper_Data $adminHtmlHelper */
-        $adminHtmlHelper = Mage::helper('adminhtml');
+        /** @var Mage_Adminhtml_Model_Url $adminHtmlUrlModel */
+        $adminHtmlUrlModel = Mage::getModel('adminhtml/url');
 
-        return $adminHtmlHelper->getUrl(self::URL_PATH_NOSTO_CONFIG, $params);
+        return $adminHtmlUrlModel->getUrl(self::URL_PATH_NOSTO_CONFIG, $params);
     }
 
     /**
@@ -561,8 +611,9 @@ class Nosto_Tagging_Helper_Url extends Mage_Core_Helper_Abstract
      */
     public function getCurrentUrl()
     {
-        /* @var Mage_Core_Helper_Url $mageUrlHelper */
-        $mageUrl = Mage::helper('core/url')->getCurrentUrl();
+        /* @var Mage_Core_Helper_Url $coreUrlHelper */
+        $coreUrlHelper = Mage::helper('core/url');
+        $mageUrl = $coreUrlHelper->getCurrentUrl();
         // There's a bug in Magento's Mage_Core_Helper_Url::getCurrentUrl that
         // calls htmlspecialchars for URL which ends up breaking the URL
         // parameter separator

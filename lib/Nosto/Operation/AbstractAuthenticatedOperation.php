@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -48,12 +48,19 @@ abstract class Nosto_Operation_AbstractAuthenticatedOperation extends Nosto_Oper
     protected $account;
 
     /**
+     * @var string active domain
+     */
+    protected $activeDomain;
+
+    /**
      * Constructor
      *
      * @param Nosto_Types_Signup_AccountInterface $account the account object.
+     * @param string $activeDomain
      */
-    public function __construct(Nosto_Types_Signup_AccountInterface $account)
+    public function __construct(Nosto_Types_Signup_AccountInterface $account, $activeDomain = '')
     {
         $this->account = $account;
+        $this->activeDomain = $activeDomain;
     }
 }

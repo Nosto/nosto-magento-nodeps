@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -51,10 +51,9 @@ abstract class Nosto_Tagging_Model_Meta_Cart_Item extends Nosto_Object_Cart_Line
         parent::setName($this->buildItemName($item));
         parent::setPriceCurrencyCode($currencyCode);
         parent::setSkuId($this->buildSkuId($item));
-        $store = Mage::app()->getStore();
-        /** @var Mage_Tax_Helper_Data $helper */
+        /** @var Mage_Tax_Helper_Data $taxHelper */
         $taxHelper = Mage::helper('tax');
-        $inclTax = $taxHelper->displayCartPriceInclTax($store);
+        $inclTax = $taxHelper->displayCartPriceInclTax();
 
         if ($inclTax) {
             $unitPrice = $item->getPriceInclTax();
@@ -123,7 +122,7 @@ abstract class Nosto_Tagging_Model_Meta_Cart_Item extends Nosto_Object_Cart_Line
         $skus = $item->getChildren();
         /* @var Mage_Sales_Model_Quote_Item $sku */
         if (isset($skus[0]) && $skus[0] instanceof Mage_Sales_Model_Quote_Item) {
-
+            /** @var Mage_Sales_Model_Quote_Item[] $skus*/
             return $skus[0]->getProductId();
         }
 

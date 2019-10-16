@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -56,6 +56,7 @@ class Nosto_Tagging_Helper_Customer extends Mage_Core_Helper_Abstract
      * Update the Nosto ID form the current quote if it exists.
      * The Nosto ID is present in a cookie set by the JavaScript loaded from
      * Nosto.
+     * @throws Exception
      */
     public function updateNostoId()
     {
@@ -81,14 +82,22 @@ class Nosto_Tagging_Helper_Customer extends Mage_Core_Helper_Abstract
             /** @noinspection PhpUndefinedMethodInspection */
             if ($customer->hasData()) {
                 $customer->setUpdatedAt($dateHelper->gmtDate());
-                $customer->save();
             } else {
                 $restoreCartHash = $this->generateRestoreCartHash();
                 $customer->setQuoteId($quoteId);
                 $customer->setNostoId($nostoId);
                 $customer->setRestoreCartHash($restoreCartHash);
                 $customer->setCreatedAt($dateHelper->gmtDate());
+            }
+            try {
                 $customer->save();
+            } catch (Zend_Db_Statement_Exception $e) {
+                // Omit the duplicate key exception (code 23000)
+                // It happens occasionally especially with replicated
+                // database setup
+                if ($e->getCode() !== 23000) {
+                    throw $e;
+                }
             }
         }
     }

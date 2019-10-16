@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -39,8 +39,14 @@
 /**
  * Model for sku information
  */
-class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Types_Product_SkuInterface, Nosto_Types_MarkupableInterface
+class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements
+    Nosto_Types_Product_SkuInterface,
+    Nosto_Types_MarkupableInterface,
+    Nosto_Types_HtmlEncodableInterface,
+    Nosto_Types_SanitizableInterface
 {
+    use Nosto_Mixins_HtmlEncoderTrait;
+
     /**
      * The id of the SKU
      *
@@ -102,6 +108,11 @@ class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Typ
      * @var array
      */
     private $customFields = array();
+
+    /**
+     * @var int|null product stock level
+     */
+    private $inventoryLevel;
 
     /**
      * @inheritdoc
@@ -296,5 +307,34 @@ class Nosto_Object_Product_Sku extends Nosto_AbstractObject implements Nosto_Typ
     public function getMarkupKey()
     {
         return 'nosto_sku';
+    }
+
+    /**
+     * Returns the inventory stock level
+     *
+     * @return int|null
+     */
+    public function getInventoryLevel()
+    {
+        return $this->inventoryLevel;
+    }
+
+    /**
+     * @param int|null $inventoryLevel
+     */
+    public function setInventoryLevel($inventoryLevel)
+    {
+        $this->inventoryLevel = $inventoryLevel;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function sanitize()
+    {
+        $sanitized = clone $this;
+        $sanitized->setInventoryLevel(null);
+
+        return $sanitized;
     }
 }

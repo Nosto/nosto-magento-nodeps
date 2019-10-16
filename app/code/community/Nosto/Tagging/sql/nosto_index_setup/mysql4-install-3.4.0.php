@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -33,4 +33,5 @@
 
 /** @var $setupHelper Nosto_Tagging_Helper_Setup */
 $setupHelper = Mage::helper('nosto_tagging/setup');
+/** @noinspection PhpUnhandledExceptionInspection */
 $setupHelper->createNostoIndexTable($this);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,8 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @author Nosto Solutions Ltd <contact@nosto.com>
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -37,9 +37,9 @@
 
 
 /**
- * Operation class for fetching a single-sign-on link through the Nosto_Nosto API.
+ * Operation class for fetching a single-sign-on link through the Nosto API.
  * The operation results in a single-use URL that can be used for logging in
- * to the Nosto_Nosto administration interface.
+ * to the Nosto administration interface.
  */
 class Nosto_Operation_InitiateSso extends Nosto_Operation_AbstractAuthenticatedOperation
 {
@@ -54,13 +54,16 @@ class Nosto_Operation_InitiateSso extends Nosto_Operation_AbstractAuthenticatedO
      */
     public function get(Nosto_Types_UserInterface $user, $platform)
     {
-        $request = $this->initHttpRequest($this->account->getApiToken(Nosto_Request_Api_Token::API_SSO));
+        $request = $this->initHttpRequest(
+            $this->account->getApiToken(Nosto_Request_Api_Token::API_SSO),
+            $this->account->getName()
+        );
         $request->setPath(Nosto_Request_Api_ApiRequest::PATH_SSO_AUTH);
         $request->setContentType(self::CONTENT_TYPE_APPLICATION_JSON);
         $request->setReplaceParams(array('{platform}' => $platform));
         $response = $request->post($user);
         if ($response->getCode() !== 200) {
-            Nosto_Nosto::throwHttpException($request, $response);
+            throw Nosto_Exception_Builder::fromHttpRequestAndResponse($request, $response);
         }
 
         return $response->getJsonResult()->login_url;

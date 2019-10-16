@@ -41,6 +41,8 @@ class Dotenv_Dotenv
     /**
      * Load environment file in given directory.
      *
+     * @throws Dotenv_Exception_InvalidPathException|\Dotenv\Exception\InvalidFileException
+     *
      * @return array
      */
     public function load()
@@ -49,7 +51,26 @@ class Dotenv_Dotenv
     }
 
     /**
+     * Load environment file in given directory, suppress InvalidPathException.
+     *
+     * @throws \Dotenv\Exception\InvalidFileException
+     *
+     * @return array
+     */
+    public function safeLoad()
+    {
+        try {
+            return $this->loadData();
+        } catch (Dotenv_Exception_InvalidPathException $e) {
+            // suppressing exception
+            return array();
+        }
+    }
+
+    /**
      * Load environment file in given directory.
+     *
+     * @throws Dotenv_Exception_InvalidPathException|\Dotenv\Exception\InvalidFileException
      *
      * @return array
      */
@@ -82,13 +103,13 @@ class Dotenv_Dotenv
      *
      * @param bool $overload
      *
+     * @throws Dotenv_Exception_InvalidPathException|\Dotenv\Exception\InvalidFileException
+     *
      * @return array
      */
     protected function loadData($overload = false)
     {
-        $this->loader = new Dotenv_Loader($this->filePath, !$overload);
-
-        return $this->loader->load();
+        return $this->loader->setImmutable(!$overload)->load();
     }
 
     /**
@@ -101,5 +122,15 @@ class Dotenv_Dotenv
     public function required($variable)
     {
         return new Dotenv_Validator((array) $variable, $this->loader);
+    }
+
+    /**
+     * Get the list of environment variables declared inside the 'env' file.
+     *
+     * @return array
+     */
+    public function getEnvironmentVariableNames()
+    {
+        return $this->loader->variableNames;
     }
 }

@@ -21,9 +21,11 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
+use Nosto_Tagging_Helper_Log as NostoLog;
 
 /**
  * Helper class for common operations.
@@ -70,6 +72,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     const XML_PATH_VARIATION_SWITCH = 'nosto_tagging/variation/switch';
 
     /**
+     * Path to store config of sending inventory level
+     */
+    const XML_PATH_SEND_INVENTORY_LEVEL_AFTER_PURCHASE = 'nosto_tagging/general/send_inventory_level_after_purchase';
+
+    /**
      * Path to store config scheduled currency exchange rate update enabled setting.
      */
     const XML_PATH_SCHEDULED_CURRENCY_EXCHANGE_RATE_UPDATE_ENABLED
@@ -106,6 +113,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     const XML_PATH_SEND_CUSTOMER_DATA = 'nosto_tagging/general/send_customer_data';
 
     /**
+     * Path to store config for tagging the date a product has beed added to Magento's catalog
+     */
+    const XML_PATH_TAG_DATE_PUBLISHED = 'nosto_tagging/general/tag_date_published';
+
+    /**
      * Path to store config for using SKUs
      */
     const XML_PATH_USE_SKUS = 'nosto_tagging/general/use_skus';
@@ -114,6 +126,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Path to store config for restore cart redirection
      */
     const XML_PATH_RESTORE_CART_LOCATION = 'nosto_tagging/general/restore_cart_location';
+
+    /**
+     * Path to store config for indexer allowed memory percentage
+     */
+    const XML_PATH_INDEXER_MEMORY = 'nosto_tagging/general/indexer_memory';
 
     /**
      * Path to store config for custom fields
@@ -139,6 +156,11 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Path to store config for tagging low stock
      */
     const XML_PATH_USE_LOW_STOCK = 'nosto_tagging/general/use_low_stock';
+
+    /**
+     * Path to setting if personalized category sorting is enabled
+     */
+    const XML_PATH_USE_PERSONALIZED_CATEGORY_SORTING = 'nosto_tagging/general/personalized_category_sorting';
 
     /**
      * @var boolean the path for setting for product urls
@@ -271,7 +293,9 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
         $installationId = Mage::getStoreConfig(self::XML_PATH_INSTALLATION_ID);
         if (empty($installationId)) {
             // Running bin2hex() will make the ID string length 64 characters.
-            $installationId = Mage::helper('core')->getRandomString($length = 64);
+            /** @var Mage_Core_Helper_Data $dataHelper */
+            $dataHelper = Mage::helper('core');
+            $installationId = $dataHelper->getRandomString($length = 64);
             /** @var Mage_Core_Model_Config $config */
             $config = Mage::getModel('core/config');
             $config->saveConfig(
@@ -303,7 +327,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      *
      * @param Mage_Core_Model_Store|null $store the store model or null.
      *
-     * @return bool
+     * @return boolean
      */
     public function getUsePrettyProductUrls($store = null)
     {
@@ -437,7 +461,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     public function getMultiCurrencyMethod($store = null)
     {
         if ($store instanceof Mage_Core_Model_Store === false) {
-            $store = Mage::app()->getStore();
+            $store = $this->getStore();
         }
         return Mage::getStoreConfig(self::XML_PATH_MULTI_CURRENCY_METHOD, $store);
     }
@@ -457,6 +481,12 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
         return ($method === self::MULTI_CURRENCY_DISABLED);
     }
 
+    /**
+     * Check if price variations are enabled
+     *
+     * @param null $store
+     * @return bool
+     */
     public function isVariationEnabled($store = null)
     {
         return (bool)Mage::getStoreConfig(self::XML_PATH_VARIATION_SWITCH, $store);
@@ -493,7 +523,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Returns on/off setting for product API
      *
      * @param Mage_Core_Model_Store|null $store the store model or null.
-     * @return bool
+     * @return boolean
      */
     public function getUseProductApi($store = null)
     {
@@ -537,11 +567,22 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Returns on/off setting for SKUs
      *
      * @param Mage_Core_Model_Store|null $store the store model or null.
-     * @return bool
+     * @return boolean
      */
     public function getUseSkus($store = null)
     {
         return (bool)Mage::getStoreConfig(self::XML_PATH_USE_SKUS, $store);
+    }
+
+    /**
+     * Returns on/off setting for tagging product's date published
+     *
+     * @param Mage_Core_Model_Store|null $store the store model or null.
+     * @return boolean
+     */
+    public function getTagDatePublished($store = null)
+    {
+        return (bool)Mage::getStoreConfig(self::XML_PATH_TAG_DATE_PUBLISHED, $store);
     }
 
     /**
@@ -559,7 +600,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Returns on/off setting for alternate image urls
      *
      * @param Mage_Core_Model_Store|null $store the store model or null.
-     * @return bool
+     * @return boolean
      */
     public function getUseAlternateImages($store = null)
     {
@@ -570,7 +611,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Returns on/off setting for inventory level
      *
      * @param Mage_Core_Model_Store|null $store the store model or null.
-     * @return bool
+     * @return boolean
      */
     public function getUseInventoryLevel($store = null)
     {
@@ -578,10 +619,21 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * Returns on/off setting for sending inventory level after purchase
+     *
+     * @param Mage_Core_Model_Store|null $store the store model or null.
+     * @return boolean
+     */
+    public function getSendInventoryLevelAfterPurchase($store = null)
+    {
+        return (bool)Mage::getStoreConfig(self::XML_PATH_SEND_INVENTORY_LEVEL_AFTER_PURCHASE, $store);
+    }
+
+    /**
      * Returns on/off setting for using low stock
      *
      * @param Mage_Core_Model_Store|null $store the store model or null.
-     * @return bool
+     * @return boolean
      */
     public function getUseLowStock($store = null)
     {
@@ -590,13 +642,26 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
 
     /**
      * Returns is the sending add to cart event to nosto enabled
+     * This feature has been removed so it will return false
      *
      * @param Mage_Core_Model_Store $store
      * @return bool
+     * @deprecated
      */
     public function getSendAddToCartEvent($store)
     {
-        return (bool)Mage::getStoreConfig(self::XML_PATH_SEND_ADD_TO_CART_EVENT, $store);
+        return false;
+    }
+
+    /**
+     * Returns on/off setting for using personalized category sorting
+     *
+     * @param Mage_Core_Model_Store|null $store the store model or null.
+     * @return boolean
+     */
+    public function getUsePersonalizedCategorySorting($store = null)
+    {
+        return (bool)Mage::getStoreConfig(self::XML_PATH_USE_PERSONALIZED_CATEGORY_SORTING, $store);
     }
 
     /**
@@ -616,7 +681,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
      * Return the attributes to be tagged in Nosto tags
      *
      * @param string $tagId the name / identifier of the tag (e.g. tag1, tag2).
-     * @param Mage_Core_Model_Store|null $store the store model or null.
+     * @param mixed $store the store model or null.
      *
      * @throws Nosto_NostoException
      * @return array
@@ -656,6 +721,18 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * Return the percentage of allowed memory for the indexer
+     *
+     * @param Mage_Core_Model_Store|null $store the store model or null.
+     *
+     * @return string
+     */
+    public function getIndexerMemoryPercentage($store = null)
+    {
+        return Mage::getStoreConfig(self::XML_PATH_INDEXER_MEMORY, $store);
+    }
+
+    /**
      * Set the ratings and reviews provider
      *
      * @param string $provider
@@ -664,7 +741,7 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     public function setRatingsAndReviewsProvider($provider, $store = null)
     {
         if ($store === null) {
-            $store = Mage::app()->getStore();
+            $store = $this->getStore();
         }
         /** @var Mage_Core_Model_Config $config */
         $config = Mage::getModel('core/config');
@@ -761,9 +838,25 @@ class Nosto_Tagging_Helper_Data extends Mage_Core_Helper_Abstract
     public function getNostoStoreConfig($store = null)
     {
         if ($store === null) {
-            $store = Mage::app()->getStore();
+            $store = $this->getStore();
         }
         return Mage::getStoreConfig('nosto_tagging', $store);
+    }
+
+    /**
+     * Wrapper to return the current store
+     *
+     * @param null|string|bool|int|Mage_Core_Model_Store $id
+     * @return Mage_Core_Model_Store|null
+     */
+    public function getStore($id = null)
+    {
+        try {
+            return Mage::app()->getStore($id);
+        } catch (Mage_Core_Model_Store_Exception $e) {
+            NostoLog::exception($e);
+        }
+        return null;
     }
 
 }

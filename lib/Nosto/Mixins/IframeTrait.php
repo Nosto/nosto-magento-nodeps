@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto_Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @copyright 2019 Nosto_Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -51,23 +51,7 @@ trait Nosto_Mixins_IframeTrait
     public function buildURL(array $params = array())
     {
         $iframe = self::getIframe();
-        $defaultParameters = array(
-            'lang' => strtolower($iframe->getLanguageIsoCode()),
-            'ps_version' => $iframe->getVersionPlatform(),
-            'nt_version' => $iframe->getVersionModule(),
-            'product_pu' => $iframe->getPreviewUrlProduct(),
-            'category_pu' => $iframe->getPreviewUrlCategory(),
-            'search_pu' => $iframe->getPreviewUrlSearch(),
-            'cart_pu' => $iframe->getPreviewUrlCart(),
-            'front_pu' => $iframe->getPreviewUrlFront(),
-            'shop_lang' => strtolower($iframe->getLanguageIsoCodeShop()),
-            'shop_name' => $iframe->getShopName(),
-            'unique_id' => $iframe->getUniqueId(),
-            'fname' => $iframe->getFirstName(),
-            'lname' => $iframe->getLastName(),
-            'email' => $iframe->getEmail(),
-            'modules' => $iframe->getModules()
-        );
+        $defaultParameters = Nosto_Helper_IframeHelper::getDefaultParams($iframe);
 
         $account = self::getAccount();
         if ($account instanceof Nosto_Types_Signup_AccountInterface) {

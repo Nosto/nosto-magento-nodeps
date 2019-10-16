@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -94,15 +94,17 @@ class Nosto_Tagging_Block_Order extends Mage_Checkout_Block_Success
                 $nostoOrder = Mage::getModel('nosto_tagging/meta_order');
                 $nostoOrder->loadData($order);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             NostoLog::exception($e);
         }
 
         return $nostoOrder;
     }
 
-    /*
+    /**
      * Returns the visitor's Nosto Id
+     *
+     * @return null|string
      */
     public function getVisitorChecksum()
     {

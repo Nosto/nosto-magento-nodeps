@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -152,7 +152,9 @@ class Nosto_Tagging_Model_Observer_Setting
                             self::restructureTagsKey($persistedConfig['attribute_to_tag']);
                     }
                     if (self::getDiffNostoSettingsInPost($postGroups, $persistedConfig) != array()) {
-                        Mage::getSingleton('index/indexer')
+                        /** @var Mage_Index_Model_Indexer $indexerModel */
+                        $indexerModel = Mage::getSingleton('index/indexer');
+                        $indexerModel
                             ->getProcessByCode('nosto_indexer')
                             ->changeStatus(Mage_Index_Model_Process::STATUS_REQUIRE_REINDEX);
                         return $this;

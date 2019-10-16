@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -72,6 +72,8 @@ class Nosto_Tagging_Block_Meta extends Mage_Core_Block_Template
      */
     public function getLanguageIsoCode()
     {
-        return substr(Mage::app()->getStore()->getConfig('general/locale/code'), 0, 2);
+        /** @var Nosto_Tagging_Helper_Data $helper */
+        $helper = Mage::helper('nosto_tagging');
+        return substr($helper->getStore()->getConfig('general/locale/code'), 0, 2);
     }
 }

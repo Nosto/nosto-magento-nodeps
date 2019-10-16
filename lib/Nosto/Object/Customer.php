@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -39,8 +39,13 @@
 /**
  * Nosto_Object_Customer object for tagging
  */
-class Nosto_Object_Customer extends Nosto_Object_User implements Nosto_Types_UserInterface, Nosto_Types_MarkupableInterface
+class Nosto_Object_Customer extends Nosto_Object_User implements
+    Nosto_Types_CustomerInterface,
+    Nosto_Types_MarkupableInterface,
+    Nosto_Types_HtmlEncodableInterface
 {
+    use Nosto_Mixins_HtmlEncoderTrait;
+
     /**
      * @var string customer reference
      */
@@ -50,6 +55,16 @@ class Nosto_Object_Customer extends Nosto_Object_User implements Nosto_Types_Use
      * @var string visitor checksum
      */
     private $hcid;
+
+    /**
+     * @var string customer group
+     */
+    private $customerGroup;
+
+    /**
+     * @var Nosto_Object_Subscription subscription
+     */
+    private $subscription;
 
     /**
      * Get the visitor checksum
@@ -90,5 +105,37 @@ class Nosto_Object_Customer extends Nosto_Object_User implements Nosto_Types_Use
     public function getMarkupKey()
     {
         return 'nosto_customer';
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getCustomerGroup()
+    {
+        return $this->customerGroup;
+    }
+
+    /**
+     * @param string $customerGroup
+     */
+    public function setCustomerGroup($customerGroup)
+    {
+        $this->customerGroup = $customerGroup;
+    }
+
+    /**
+     * @return Nosto_Object_Subscription
+     */
+    public function getSubscription()
+    {
+        return $this->subscription;
+    }
+
+    /**
+     * @param Nosto_Object_Subscription $subscription
+     */
+    public function setSubscription(Nosto_Object_Subscription $subscription)
+    {
+        $this->subscription = $subscription;
     }
 }

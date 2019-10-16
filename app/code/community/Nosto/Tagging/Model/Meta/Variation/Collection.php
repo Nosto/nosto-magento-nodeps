@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -50,9 +50,6 @@ class Nosto_Tagging_Model_Meta_Variation_Collection extends Nosto_Object_Product
         Mage_Core_Model_Store $store
     )
     {
-        /** @var $customerHelper Mage_Customer_Helper_Data */
-        $customerHelper = Mage::helper('customer');
-        $defaultGroupId = $customerHelper->getDefaultCustomerGroupId($store);
         $groups = Mage::getModel('customer/group')->getCollection();
         /** @var Mage_Customer_Model_Group $group */
         foreach ($groups as $group) {

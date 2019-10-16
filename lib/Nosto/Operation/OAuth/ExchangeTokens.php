@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,8 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @author Nosto Solutions Ltd <contact@nosto.com>
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -37,7 +37,7 @@
 
 
 /**
- * Handles exchanging the authorization token for the API tokes from Nosto_Nosto
+ * Handles exchanging the authorization token for the API tokes from Nosto
  */
 class Nosto_Operation_OAuth_ExchangeTokens extends Nosto_Operation_AbstractOperation
 {
@@ -49,7 +49,7 @@ class Nosto_Operation_OAuth_ExchangeTokens extends Nosto_Operation_AbstractOpera
     /**
      * Constructor.
      *
-     * Accepts the Nosto_Nosto account for which the service is to operate on.
+     * Accepts the Nosto account for which the service is to operate on.
      * @param Nosto_Types_OAuthInterface $meta the oauth meta data params
      */
     public function __construct(Nosto_Types_OAuthInterface $meta)
@@ -58,7 +58,7 @@ class Nosto_Operation_OAuth_ExchangeTokens extends Nosto_Operation_AbstractOpera
     }
 
     /**
-     * Sends a POST request to delete an account for a store in Nosto_Nosto
+     * Sends a POST request to delete an account for a store in Nosto
      *
      * @param Nosto_Object_NostoOAuthToken $token string the oauth access code.
      * @return Nosto_Types_Signup_AccountInterface the configured account
@@ -72,7 +72,7 @@ class Nosto_Operation_OAuth_ExchangeTokens extends Nosto_Operation_AbstractOpera
         $request->setQueryParams(array('access_token' => $token->getAccessToken()));
         $response = $request->get();
         if ($response->getCode() !== 200) {
-            Nosto_Nosto::throwHttpException($request, $response);
+            throw Nosto_Exception_Builder::fromHttpRequestAndResponse($request, $response);
         }
 
         $tokens = Nosto_Request_Api_Token::parseTokens($response->getJsonResult(true), 'api_');

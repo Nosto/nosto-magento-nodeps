@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -93,7 +93,12 @@ abstract class Nosto_Tagging_Model_Meta_Order_Item extends Nosto_Object_Cart_Lin
                 return $parentIds[0];
             }
         }
-        return (string) $item->getProductId();
+        $productId = (string)$item->getProductId();
+        if (trim($productId) === '') {
+            return Nosto_Object_Cart_LineItem::PSEUDO_PRODUCT_ID;
+        }
+
+        return $productId;
     }
 
     /**
@@ -108,7 +113,7 @@ abstract class Nosto_Tagging_Model_Meta_Order_Item extends Nosto_Object_Cart_Lin
         $skus = $item->getChildrenItems();
         /* @var Mage_Sales_Model_Order_Item $sku */
         if (isset($skus[0]) && $skus[0] instanceof Mage_Sales_Model_Order_Item) {
-
+            /** @var Mage_Sales_Model_Order_Item[] $skus */
             return $skus[0]->getProductId();
         }
 

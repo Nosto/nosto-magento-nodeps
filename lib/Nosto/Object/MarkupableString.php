@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,15 +29,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
 
 
 
-class Nosto_Object_MarkupableString extends Nosto_AbstractObject implements Nosto_Types_MarkupableInterface
+class Nosto_Object_MarkupableString extends Nosto_AbstractObject implements
+    Nosto_Types_MarkupableInterface,
+    Nosto_Types_HtmlEncodableInterface
 {
+    use Nosto_Mixins_HtmlEncoderTrait;
+
     /** @var string the markup key in the html */
     protected $markupKey;
 
@@ -62,6 +66,15 @@ class Nosto_Object_MarkupableString extends Nosto_AbstractObject implements Nost
     public function getValue()
     {
         return $this->value;
+    }
+
+    /**
+     * Setter for the value
+     * @param string $value
+     */
+    public function setValue($value)
+    {
+        $this->value = $value;
     }
 
     /**

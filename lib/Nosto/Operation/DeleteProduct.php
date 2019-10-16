@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -50,6 +50,16 @@ class Nosto_Operation_DeleteProduct extends Nosto_Operation_AbstractAuthenticate
     private $productIds;
 
     /**
+     * Nosto_Operation_DeleteProduct constructor.
+     * @param Nosto_Types_Signup_AccountInterface $account
+     * @param string $activeDomain
+     */
+    public function __construct(Nosto_Types_Signup_AccountInterface $account, $activeDomain = '')
+    {
+        parent::__construct($account, $activeDomain);
+    }
+
+    /**
      * Adds a product tho the collection on which the operation is the performed.
      *
      * @param array $productIds
@@ -68,9 +78,13 @@ class Nosto_Operation_DeleteProduct extends Nosto_Operation_AbstractAuthenticate
      */
     public function delete()
     {
-        $request = $this->initApiRequest($this->account->getApiToken(Nosto_Request_Api_Token::API_PRODUCTS));
+        $request = $this->initApiRequest(
+            $this->account->getApiToken(Nosto_Request_Api_Token::API_PRODUCTS),
+            $this->account->getName(),
+            $this->activeDomain
+        );
         $request->setPath(Nosto_Request_Api_ApiRequest::PATH_PRODUCTS_DISCONTINUE);
         $response = $request->post($this->productIds);
-        return $this->checkResponse($request, $response);
+        return self::checkResponse($request, $response);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto_Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto_Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto_Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto_Nosto Solutions Ltd
+ * @copyright 2019 Nosto_Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -108,7 +108,7 @@ class Nosto_Operation_OAuth_AuthorizationCode
         $result = $response->getJsonResult(true);
 
         if ($response->getCode() !== 200) {
-            Nosto_Nosto::throwHttpException($request, $response);
+            throw Nosto_Exception_Builder::fromHttpRequestAndResponse($request, $response);
         }
         if (empty($result['access_token'])) {
             throw new Nosto_NostoException('No "access_token" returned after authenticating with code');

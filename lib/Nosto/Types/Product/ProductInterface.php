@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -146,6 +146,13 @@ interface Nosto_Types_Product_ProductInterface
      * @return string the brand name.
      */
     public function getBrand();
+
+    /**
+     * Returns the product publication date in the shop.
+     *
+     * @return string the date in format "Y-m-d".
+     */
+    public function getDatePublished();
 
     /**
      * Returns the product variation id.

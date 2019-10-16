@@ -13,5 +13,6 @@ Please see https://github.com/Nosto/nosto-magento for release notes. If you plan
 * Resolve possible conflicts
 * Update trailing version number to `magazine.json` and `app/code/community/Nosto/Tagging/etc/config.xml`
 * Run `composer update` (if SDK version changed)
+* Update the lib directory by running magazine (or copy from the local installation)
 * Push changes to origin/master
 * Tag with appropriate version number. For example if the last release in upstream is 2.7.3 tag origin as 2.7.3.1

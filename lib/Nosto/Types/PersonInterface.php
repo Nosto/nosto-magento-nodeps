@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017, Nosto Solutions Ltd
+ * Copyright (c) 2019, Nosto Solutions Ltd
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @author Nosto Solutions Ltd <contact@nosto.com>
- * @copyright 2017 Nosto Solutions Ltd
+ * @copyright 2019 Nosto Solutions Ltd
  * @license http://opensource.org/licenses/BSD-3-Clause BSD 3-Clause
  *
  */
@@ -86,4 +86,39 @@ interface Nosto_Types_PersonInterface
      * @return boolean
      */
     public function getMarketingPermission();
+
+    /**
+     * The gender of the customer
+     *
+     * @return string|null
+     */
+    public function getGender();
+
+    /**
+     * The date of birth of the customer
+     *
+     * @return string|null
+     */
+    public function getDateOfBirth();
+
+    /**
+     * The city of the customer
+     *
+     * @return string|null
+     */
+    public function getCity();
+
+    /**
+     * The region of the customer
+     *
+     * @return string|null
+     */
+    public function getRegion();
+
+    /**
+     * The street of the customer
+     *
+     * @return string|null
+     */
+    public function getStreet();
 }

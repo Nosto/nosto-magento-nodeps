@@ -21,7 +21,7 @@
  * @category  Nosto
  * @package   Nosto_Tagging
  * @author    Nosto Solutions Ltd <magento@nosto.com>
- * @copyright Copyright (c) 2013-2017 Nosto Solutions Ltd (http://www.nosto.com)
+ * @copyright Copyright (c) 2013-2019 Nosto Solutions Ltd (http://www.nosto.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -86,11 +86,14 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      * @param Mage_Core_Model_Store|null $store the store to get the product data for.
      * @return bool
      * @throws Nosto_NostoException
+     * @throws Mage_Core_Exception
      */
     public function loadData(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store = null)
     {
         if ($store === null) {
-            $store = Mage::app()->getStore();
+            /** @var Nosto_Tagging_Helper_Data $helper */
+            $helper = Mage::helper('nosto_tagging');
+            $store = $helper->getStore();
         }
         /** @var Nosto_Tagging_Helper_Data $dataHelper */
         $dataHelper = Mage::helper('nosto_tagging');
@@ -113,7 +116,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         }
         $brandAttribute = $dataHelper->getBrandAttribute($store);
         if ($product->hasData($brandAttribute)) {
-            $this->setBrand($this->getAttributeValue($product, $brandAttribute));
+            $this->setBrand($this->getAttributeValue($product, $brandAttribute, $store->getId()));
         }
         if (($tags = $this->buildTags($product, $store)) !== array()) {
             $this->setTag1($tags);
@@ -130,14 +133,20 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         if ($dataHelper->getUseSkus($store)) {
             $this->amendSkus($product, $store);
         }
-
         if ($dataHelper->isMultiCurrencyMethodExchangeRate($store)) {
             $this->setVariationId($store->getBaseCurrencyCode());
         } elseif ($dataHelper->isVariationEnabled($store)) {
             $this->amendVariations($product, $store);
         }
         if ($dataHelper->getUseCustomFields($store)) {
-            $this->setCustomFields($this->loadCustomFields($product));
+            $this->setCustomFields($this->buildCustomFields($product, $store));
+        }
+        if ($dataHelper->getTagDatePublished($store) && $product->hasData('created_at')) {
+            try {
+                $this->setDatePublished($product->getData('created_at'));
+            } catch (Nosto_NostoException $e) {
+                Nosto_Tagging_Helper_Log::exception($e);
+            }
         }
 
         Mage::dispatchEvent(
@@ -157,7 +166,6 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      *
      * @param Mage_Catalog_Model_Product $product
      * @param Mage_Core_Model_Store $store
-     * @throws Nosto_NostoException
      */
     protected function amendVariations(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
     {
@@ -181,6 +189,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      *
      * @param Mage_Catalog_Model_Product $product the product model.
      * @param Mage_Core_Model_Store $store
+     * @throws Mage_Core_Exception
      */
     protected function amendSkus(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
     {
@@ -265,7 +274,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         $stockHelper = Mage::helper('nosto_tagging/stock');
         try {
             $this->setInventoryLevel($stockHelper->getQty($product));
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Nosto_Tagging_Helper_Log::error(
                 'Failed to resolve inventory level for product %d to tags. Error message was: %s',
                 array(
@@ -363,7 +372,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
                     continue;
                 }
                 try {
-                    $attributeValue = $this->getAttributeValue($product, $key);
+                    $attributeValue = $this->getAttributeValue($product, $key, $store->getId());
                     if (empty($attributeValue)) {
                         continue;
                     }
@@ -379,7 +388,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
                             $this->addTag3(sprintf('%s:%s', $key, $attributeValue));
                             break;
                     }
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     Nosto_Tagging_Helper_Log::exception($e);
                 }
             }
@@ -407,6 +416,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
 
         /** @var Nosto_Tagging_Helper_Data $helper */
         $helper = Mage::helper('nosto_tagging');
+        /** @var Mage_Catalog_Model_Resource_Category_Collection $categoryCollection */
         $categoryCollection = $product->getCategoryCollection();
         $categoryCollection->addAttributeToFilter('is_active', 1);
         foreach ($categoryCollection as $category) {
@@ -442,6 +452,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         } else {
             trigger_error('Call to undefined method ' . __CLASS__ . '::' . $method . '()', E_USER_ERROR); // @codingStandardsIgnoreLine
         }
+        return null;
     }
 
     /**
@@ -463,7 +474,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         if (method_exists($this, $setter)) {
             try {
                 $this->$setter($value);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 Nosto_Tagging_Helper_Log::exception($e);
             }
         }
@@ -489,7 +500,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         if (method_exists($this, $getter)) {
             try {
                 $value = $this->$getter();
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 Nosto_Tagging_Helper_Log::exception($e);
             }
         }
@@ -501,22 +512,40 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      *
      * @param Mage_Catalog_Model_Product $product
      * @param string $attributeName
+     * @param null|int $storeId The id of the current store
      * @return string|null
      * @suppress PhanUndeclaredMethod
+     * @suppress PhanTypeMismatchArgument
      */
-    protected function getAttributeValue(Mage_Catalog_Model_Product $product, $attributeName)
+    protected function getAttributeValue(
+        Mage_Catalog_Model_Product $product,
+        $attributeName,
+        $storeId = null
+    )
     {
         $attribute = $product->getResource()->getAttribute($attributeName);
         if ($attribute instanceof Mage_Catalog_Model_Resource_Eav_Attribute) {
             /** @noinspection PhpParamsInspection */
-            $attributeValue = $product->getAttributeText($attributeName);
+            if ($storeId && method_exists($product, 'setStoreId')) {
+                $product->setStoreId($storeId);
+            }
+            try {
+                /** @noinspection PhpUndefinedMethodInspection */
+                $attributeValue = $product->getResource()
+                    ->getAttribute($attribute)
+                    ->setStoreId($storeId)
+                    ->getSource()
+                    ->getOptionText($product->getData($attributeName));
+            } catch (\Exception $e) {
+                Nosto_Tagging_Helper_Log::exception($e);
+            }
             if (empty($attributeValue)) {
                 $attributeValue = $product->getData($attributeName);
             }
-
             if (is_scalar($attributeValue)) {
                 return trim($attributeValue);
-            } elseif (is_array($attributeValue)) {
+            }
+            if (is_array($attributeValue)) {
                 return implode(',', $attributeValue);
             }
         }
@@ -618,6 +647,7 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
      * @param Mage_Core_Model_Store $store the store to get the product data for.
      *
      * @return bool returns false if the product is not available in a given store
+     * @throws Mage_Core_Exception
      */
     public function reloadData(Mage_Catalog_Model_Product $product, Mage_Core_Model_Store $store)
     {
@@ -652,5 +682,57 @@ class Nosto_Tagging_Model_Meta_Product extends Nosto_Object_Product_Product
         }
 
         return $availability;
+    }
+
+    /**
+     * Adds selected attributes to all tags also in the custom fields section
+     *
+     * @param Mage_Catalog_Model_Product $product
+     * @param Mage_Core_Model_Store $store
+     * @return array
+     * @throws Nosto_NostoException
+     */
+    protected function buildCustomFields(
+        Mage_Catalog_Model_Product $product,
+        Mage_Core_Model_Store $store
+    )
+    {
+        $customFields = $this->loadCustomFields($product, $store);
+        $attributes = $this->getAttributesFromAllTags($store);
+        /* @var Mage_Catalog_Model_Resource_Eav_Attribute $productAttribute */
+        foreach ($product->getAttributes() as $key => $productAttribute) {
+            if (in_array($key, $attributes, false)) {
+                $attributeValue = $this->getAttributeValue($product, $key);
+                if ($attributeValue === null || $attributeValue === '') {
+                    continue;
+                }
+                $customFields[$key] = $attributeValue;
+            }
+        }
+        return $customFields;
+    }
+
+    /**
+     * Returns unique selected attributes from all tags
+     *
+     * @param Mage_Core_Model_Store $store
+     * @return array
+     * @throws Nosto_NostoException
+     */
+    protected function getAttributesFromAllTags(Mage_Core_Model_Store $store)
+    {
+        $attributes = array();
+        /* @var Nosto_Tagging_Helper_Data $nostoHelper */
+        $nostoHelper = Mage::helper("nosto_tagging");
+        foreach (Nosto_Tagging_Helper_Data::$validTags as $tagId) {
+            $attributesToTag = $nostoHelper->getAttributesToTag($tagId, $store->getId());
+            if (empty($attributesToTag) || !is_array($attributesToTag)) {
+                continue;
+            }
+            foreach ($attributesToTag as $tagAttribute) {
+                $attributes[] = $tagAttribute;
+            }
+        }
+        return array_unique($attributes);
     }
 }
